@@ -1,0 +1,33 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+issueTrackerUrl="https://github.com/mitosv/cinematic/issues"
+
+[[mods]]
+modId="cinematic"
+version="1.0.0"
+displayName="Cinematic"
+logoFile="cinematic.png"
+authors="mitosv"
+description='''Cinematic mod for full-screen unskippable cutscenes in Minecraft 1.20.1'''
+
+[[dependencies.cinematic]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1, 1.21)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.cinematic]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47.3,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.cinematic]]
+    modId="watermedia"
+    mandatory=false
+    versionRange="[2.0.0,)"
+    ordering="NONE"
+    side="CLIENT"
