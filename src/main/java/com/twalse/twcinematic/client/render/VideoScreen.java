@@ -14,8 +14,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import org.joml.Matrix4f;
 import org.watermedia.api.player.videolan.VideoPlayer;
-import org.watermedia.videolan4j.player.base.MediaPlayer;
-import org.watermedia.videolan4j.player.base.MediaPlayerEventAdapter;
 
 public class VideoScreen extends Screen {
     private final Video video;
@@ -40,34 +38,11 @@ public class VideoScreen extends Screen {
         }
 
         try {
+            // Pass Runnable::run so that texture deletion on release runs on the render thread (or current thread)
             this.mediaPlayer = new VideoPlayer(Runnable::run);
             this.mediaPlayer.setVolume(this.volume);
 
-            this.mediaPlayer.raw().mediaPlayer().events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
-                @Override
-                public void finished(MediaPlayer mediaPlayer) {
-                    TwCinematic.LOGGER.info("Cutscene finished.");
-                    if (VideoScreen.this.minecraft != null) {
-                        VideoScreen.this.minecraft.execute(VideoScreen.this::onClose);
-                    }
-                }
-
-                @Override
-                public void stopped(MediaPlayer mediaPlayer) {
-                    if (!VideoScreen.this.stopped && VideoScreen.this.minecraft != null) {
-                        VideoScreen.this.minecraft.execute(VideoScreen.this::onClose);
-                    }
-                }
-
-                @Override
-                public void error(MediaPlayer mediaPlayer) {
-                    TwCinematic.LOGGER.error("WaterMedia error playing video.");
-                    if (VideoScreen.this.minecraft != null) {
-                        VideoScreen.this.minecraft.execute(VideoScreen.this::onClose);
-                    }
-                }
-            });
-
+            // DO NOT register raw GL / event listeners on VLC background threads!
             this.mediaPlayer.start(this.video.getMediaUri());
         } catch (Exception e) {
             TwCinematic.LOGGER.error("Failed to initialize WaterMedia VideoPlayer", e);
@@ -81,8 +56,21 @@ public class VideoScreen extends Screen {
         int height = this.height;
 
         if (this.mediaPlayer != null) {
-            this.mediaPlayer.preRender();
-            int textureId = this.mediaPlayer.texture();
+            // Check if video finished or stopped
+            if (this.mediaPlayer.isEnded() || (this.mediaPlayer.isStopped() && !this.mediaPlayer.isReady() && !this.mediaPlayer.isWaiting() && !this.mediaPlayer.isLoading())) {
+                TwCinematic.LOGGER.info("Video playback ended or stopped. Closing screen.");
+                this.onClose();
+                return;
+            }
+
+            if (this.mediaPlayer.isBroken()) {
+                TwCinematic.LOGGER.error("Video player entered broken state. Closing screen.");
+                this.onClose();
+                return;
+            }
+
+            // preRender() MUST be called exclusively on the main OpenGL render thread!
+            int textureId = this.mediaPlayer.preRender();
             if (textureId > 0) {
                 RenderSystem.setShader(GameRenderer::getPositionTexShader);
                 RenderSystem.setShaderTexture(0, textureId);
