@@ -14,13 +14,41 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import org.joml.Matrix4f;
 import org.watermedia.api.player.videolan.VideoPlayer;
+import org.watermedia.videolan4j.player.base.MediaPlayer;
+import org.watermedia.videolan4j.player.base.MediaPlayerEventAdapter;
+import org.watermedia.videolan4j.player.base.MediaPlayerEventListener;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VideoScreen extends Screen {
     private final Video video;
     private final int volume;
     private VideoPlayer mediaPlayer;
-    private boolean stopped = false;
     private boolean wasHudHidden = false;
+
+    private volatile boolean shouldClose = false;
+    private final AtomicBoolean isReleased = new AtomicBoolean(false);
+
+    // Strongly referenced event listener to prevent JNA callback garbage collection
+    private final MediaPlayerEventListener mediaEventListener = new MediaPlayerEventAdapter() {
+        @Override
+        public void finished(MediaPlayer mediaPlayer) {
+            TwCinematic.LOGGER.info("Video finished via VLC event listener.");
+            shouldClose = true;
+        }
+
+        @Override
+        public void stopped(MediaPlayer mediaPlayer) {
+            TwCinematic.LOGGER.info("Video stopped via VLC event listener.");
+            shouldClose = true;
+        }
+
+        @Override
+        public void error(MediaPlayer mediaPlayer) {
+            TwCinematic.LOGGER.error("Video error via VLC event listener.");
+            shouldClose = true;
+        }
+    };
 
     public VideoScreen(Video video, int volume) {
         super(Component.empty());
@@ -38,30 +66,38 @@ public class VideoScreen extends Screen {
         }
 
         try {
-            // Pass Minecraft.getInstance() as the render executor so that texture uploads (RenderAPI.uploadBuffer)
-            // and texture deletion (RenderAPI.deleteTexture) are posted to Minecraft's main render thread
-            // instead of running on VLC's background decoder thread where no GL context exists.
             this.mediaPlayer = new VideoPlayer(Minecraft.getInstance());
             this.mediaPlayer.setVolume(this.volume);
+
+            // Register strongly-referenced listener to prevent GC from collecting JNA callback
+            this.mediaPlayer.raw().mediaPlayer().events().addMediaPlayerEventListener(this.mediaEventListener);
+
             this.mediaPlayer.start(this.video.getMediaUri());
         } catch (Exception e) {
             TwCinematic.LOGGER.error("Failed to initialize WaterMedia VideoPlayer", e);
-            this.onClose();
+            this.closeAndCleanup();
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (this.shouldClose || (this.mediaPlayer != null && (this.mediaPlayer.isEnded() || this.mediaPlayer.isBroken()))) {
+            this.closeAndCleanup();
         }
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-        if (this.mediaPlayer == null) return;
 
-        // Check playback status
-        if (this.mediaPlayer.isEnded() || this.mediaPlayer.isBroken() ||
-           (this.mediaPlayer.isStopped() && !this.mediaPlayer.isReady() && !this.mediaPlayer.isWaiting() && !this.mediaPlayer.isLoading())) {
-            TwCinematic.LOGGER.info("Cutscene finished or stopped. Closing screen.");
-            this.onClose();
+        if (this.shouldClose || (this.mediaPlayer != null && (this.mediaPlayer.isEnded() || this.mediaPlayer.isBroken() ||
+           (this.mediaPlayer.isStopped() && !this.mediaPlayer.isReady() && !this.mediaPlayer.isWaiting() && !this.mediaPlayer.isLoading())))) {
+            this.closeAndCleanup();
             return;
         }
+
+        if (this.mediaPlayer == null) return;
 
         int textureId = this.mediaPlayer.texture();
         if (textureId <= 0) return;
@@ -86,6 +122,27 @@ public class VideoScreen extends Screen {
         tesselator.end();
 
         RenderSystem.disableBlend();
+    }
+
+    private void closeAndCleanup() {
+        if (isReleased.compareAndSet(false, true)) {
+            if (this.mediaPlayer != null) {
+                try {
+                    this.mediaPlayer.stop();
+                    this.mediaPlayer.release();
+                } catch (Exception ignored) {}
+                this.mediaPlayer = null;
+            }
+            if (this.minecraft != null) {
+                this.minecraft.options.hideGui = this.wasHudHidden;
+                this.minecraft.mouseHandler.grabMouse();
+            }
+            Minecraft.getInstance().tell(() -> {
+                if (Minecraft.getInstance().screen == this) {
+                    Minecraft.getInstance().setScreen(null);
+                }
+            });
+        }
     }
 
     @Override
@@ -122,17 +179,13 @@ public class VideoScreen extends Screen {
 
     @Override
     public void onClose() {
-        if (!this.stopped) {
-            this.stopped = true;
-            if (this.mediaPlayer != null) {
-                this.mediaPlayer.release();
-                this.mediaPlayer = null;
-            }
-            if (this.minecraft != null) {
-                this.minecraft.options.hideGui = this.wasHudHidden;
-                this.minecraft.mouseHandler.grabMouse();
-            }
-        }
+        this.closeAndCleanup();
         super.onClose();
+    }
+
+    @Override
+    public void removed() {
+        this.closeAndCleanup();
+        super.removed();
     }
 }
