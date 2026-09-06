@@ -1,13 +1,13 @@
 modLoader="javafml"
 loaderVersion="${loader_version_range}"
 license="${mod_license}"
-issueTrackerUrl="https://github.com/mitosv/cinematic/issues"
+issueTrackerUrl="https://github.com/twalse/twcinematic/issues"
 
 [[mods]]
 modId="${mod_id}"
 version="${version}"
 displayName="${mod_name}"
-logoFile="cinematic.png"
+logoFile="twcinematic.png"
 authors="${mod_authors}"
 description='''${mod_description}'''
 

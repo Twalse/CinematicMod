@@ -1,8 +1,0 @@
-Manifest-Version: 1.0
-Specification-Title: cinematic
-Specification-Vendor: mitosv
-Specification-Version: 1
-Implementation-Title: cinematic
-Implementation-Version: 1.0.0
-Implementation-Vendor: mitosv
-Implementation-Timestamp: 2026-08-27T12:12:25+0000

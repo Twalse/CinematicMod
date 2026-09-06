@@ -5,8 +5,8 @@ plugins {
 }
 
 version = '1.0.0'
-group = 'com.mitosv.cinematic'
-archivesBaseName = 'cinematic'
+group = 'com.twalse.twcinematic'
+archivesBaseName = 'twcinematic'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
@@ -22,7 +22,7 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             mods {
-                cinematic {
+                twcinematic {
                     source sourceSets.main
                 }
             }
@@ -34,7 +34,7 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             mods {
-                cinematic {
+                twcinematic {
                     source sourceSets.main
                 }
             }
@@ -84,12 +84,12 @@ tasks.named('processResources', ProcessResources).configure {
 tasks.named('jar', Jar).configure {
     manifest {
         attributes([
-                'Specification-Title'     : 'cinematic',
-                'Specification-Vendor'    : 'mitosv',
+                'Specification-Title'     : 'twcinematic',
+                'Specification-Vendor'    : 'twalse',
                 'Specification-Version'   : '1',
                 'Implementation-Title'    : project.name,
                 'Implementation-Version'  : project.jar.archiveVersion,
-                'Implementation-Vendor'   : 'mitosv',
+                'Implementation-Vendor'   : 'twalse',
                 'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
