@@ -38,11 +38,11 @@ public class VideoScreen extends Screen {
         }
 
         try {
-            // Pass Runnable::run so that texture deletion on release runs on the render thread (or current thread)
-            this.mediaPlayer = new VideoPlayer(Runnable::run);
+            // Pass Minecraft.getInstance() as the render executor so that texture uploads (RenderAPI.uploadBuffer)
+            // and texture deletion (RenderAPI.deleteTexture) are posted to Minecraft's main render thread
+            // instead of running on VLC's background decoder thread where no GL context exists.
+            this.mediaPlayer = new VideoPlayer(Minecraft.getInstance());
             this.mediaPlayer.setVolume(this.volume);
-
-            // DO NOT register raw GL / event listeners on VLC background threads!
             this.mediaPlayer.start(this.video.getMediaUri());
         } catch (Exception e) {
             TwCinematic.LOGGER.error("Failed to initialize WaterMedia VideoPlayer", e);
@@ -52,45 +52,40 @@ public class VideoScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        if (this.mediaPlayer == null) return;
+
+        // Check playback status
+        if (this.mediaPlayer.isEnded() || this.mediaPlayer.isBroken() ||
+           (this.mediaPlayer.isStopped() && !this.mediaPlayer.isReady() && !this.mediaPlayer.isWaiting() && !this.mediaPlayer.isLoading())) {
+            TwCinematic.LOGGER.info("Cutscene finished or stopped. Closing screen.");
+            this.onClose();
+            return;
+        }
+
+        int textureId = this.mediaPlayer.texture();
+        if (textureId <= 0) return;
+
         int width = this.width;
         int height = this.height;
 
-        if (this.mediaPlayer != null) {
-            // Check if video finished or stopped
-            if (this.mediaPlayer.isEnded() || (this.mediaPlayer.isStopped() && !this.mediaPlayer.isReady() && !this.mediaPlayer.isWaiting() && !this.mediaPlayer.isLoading())) {
-                TwCinematic.LOGGER.info("Video playback ended or stopped. Closing screen.");
-                this.onClose();
-                return;
-            }
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderTexture(0, textureId);
+        RenderSystem.enableBlend();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-            if (this.mediaPlayer.isBroken()) {
-                TwCinematic.LOGGER.error("Video player entered broken state. Closing screen.");
-                this.onClose();
-                return;
-            }
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
+        Matrix4f matrix = guiGraphics.pose().last().pose();
 
-            // preRender() MUST be called exclusively on the main OpenGL render thread!
-            int textureId = this.mediaPlayer.preRender();
-            if (textureId > 0) {
-                RenderSystem.setShader(GameRenderer::getPositionTexShader);
-                RenderSystem.setShaderTexture(0, textureId);
-                RenderSystem.enableBlend();
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        bufferbuilder.vertex(matrix, 0, height, 0).uv(0.0F, 1.0F).endVertex();
+        bufferbuilder.vertex(matrix, width, height, 0).uv(1.0F, 1.0F).endVertex();
+        bufferbuilder.vertex(matrix, width, 0, 0).uv(1.0F, 0.0F).endVertex();
+        bufferbuilder.vertex(matrix, 0, 0, 0).uv(0.0F, 0.0F).endVertex();
+        tesselator.end();
 
-                Tesselator tesselator = Tesselator.getInstance();
-                BufferBuilder bufferbuilder = tesselator.getBuilder();
-                Matrix4f matrix = guiGraphics.pose().last().pose();
-
-                bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-                bufferbuilder.vertex(matrix, 0, height, 0).uv(0.0F, 1.0F).endVertex();
-                bufferbuilder.vertex(matrix, width, height, 0).uv(1.0F, 1.0F).endVertex();
-                bufferbuilder.vertex(matrix, width, 0, 0).uv(1.0F, 0.0F).endVertex();
-                bufferbuilder.vertex(matrix, 0, 0, 0).uv(0.0F, 0.0F).endVertex();
-                tesselator.end();
-
-                RenderSystem.disableBlend();
-            }
-        }
+        RenderSystem.disableBlend();
     }
 
     @Override
