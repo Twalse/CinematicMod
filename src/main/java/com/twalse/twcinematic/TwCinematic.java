@@ -1,10 +1,12 @@
 package com.twalse.twcinematic;
 
 import com.twalse.twcinematic.commands.StartVideoCommand;
+import com.twalse.twcinematic.commands.TwCommand;
 import com.twalse.twcinematic.config.CinematicConfig;
 import com.twalse.twcinematic.networking.PacketHandler;
 import com.twalse.twcinematic.util.FileManager;
-import com.mojang.logging.LogUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -18,14 +20,13 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
-import org.slf4j.Logger;
 
 import java.io.File;
 
 @Mod(TwCinematic.MODID)
 public class TwCinematic {
     public static final String MODID = "twcinematic";
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogManager.getLogger("twcinematic");
     private static TwCinematic instance;
     private FileManager fileManager;
 
@@ -61,6 +62,7 @@ public class TwCinematic {
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         StartVideoCommand.register(event.getDispatcher());
+        TwCommand.register(event.getDispatcher());
     }
 
     public static TwCinematic getInstance() {

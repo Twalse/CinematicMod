@@ -1,6 +1,8 @@
 package com.twalse.twcinematic.networking;
 
 import com.twalse.twcinematic.networking.message.SendVideoPlayer;
+import com.twalse.twcinematic.networking.message.SyncQuestDataPacket;
+import com.twalse.twcinematic.quest.PlayerQuestProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -25,13 +27,30 @@ public class PacketHandler {
                 .decoder(SendVideoPlayer::decode)
                 .consumerMainThread(SendVideoPlayer::handle)
                 .add();
+
+        INSTANCE.messageBuilder(SyncQuestDataPacket.class, packetId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(SyncQuestDataPacket::encode)
+                .decoder(SyncQuestDataPacket::decode)
+                .consumerMainThread(SyncQuestDataPacket::handle)
+                .add();
     }
 
-    public static void sendToPlayer(SendVideoPlayer msg, ServerPlayer player) {
+    public static void sendToPlayer(Object msg, ServerPlayer player) {
         INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), msg);
     }
 
-    public static void sendToAll(SendVideoPlayer msg) {
+    public static void sendToAll(Object msg) {
         INSTANCE.send(PacketDistributor.ALL.noArg(), msg);
+    }
+
+    public static void syncQuestData(ServerPlayer player) {
+        player.getCapability(PlayerQuestProvider.PLAYER_QUEST).ifPresent(data -> {
+            sendToPlayer(new SyncQuestDataPacket(
+                    data.getMoney(),
+                    data.getCurrentObjective(),
+                    data.getObjectiveProgress(),
+                    data.getObjectiveMax()
+            ), player);
+        });
     }
 }
