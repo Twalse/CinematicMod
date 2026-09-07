@@ -14,9 +14,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import org.joml.Matrix4f;
 import org.watermedia.api.player.videolan.VideoPlayer;
-import org.watermedia.videolan4j.player.base.MediaPlayer;
-import org.watermedia.videolan4j.player.base.MediaPlayerEventAdapter;
-import org.watermedia.videolan4j.player.base.MediaPlayerEventListener;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -25,30 +22,7 @@ public class VideoScreen extends Screen {
     private final int volume;
     private VideoPlayer mediaPlayer;
     private boolean wasHudHidden = false;
-
-    private volatile boolean shouldClose = false;
-    private final AtomicBoolean isReleased = new AtomicBoolean(false);
-
-    // Strongly referenced event listener to prevent JNA callback garbage collection
-    private final MediaPlayerEventListener mediaEventListener = new MediaPlayerEventAdapter() {
-        @Override
-        public void finished(MediaPlayer mediaPlayer) {
-            TwCinematic.LOGGER.info("Video finished via VLC event listener.");
-            shouldClose = true;
-        }
-
-        @Override
-        public void stopped(MediaPlayer mediaPlayer) {
-            TwCinematic.LOGGER.info("Video stopped via VLC event listener.");
-            shouldClose = true;
-        }
-
-        @Override
-        public void error(MediaPlayer mediaPlayer) {
-            TwCinematic.LOGGER.error("Video error via VLC event listener.");
-            shouldClose = true;
-        }
-    };
+    private final AtomicBoolean cleanedUp = new AtomicBoolean(false);
 
     public VideoScreen(Video video, int volume) {
         super(Component.empty());
@@ -66,12 +40,10 @@ public class VideoScreen extends Screen {
         }
 
         try {
+            // Initialize VideoPlayer with Minecraft as the render executor.
+            // DO NOT register any VLC EventListeners/EventAdapters to avoid JNA garbage collection crashes!
             this.mediaPlayer = new VideoPlayer(Minecraft.getInstance());
             this.mediaPlayer.setVolume(this.volume);
-
-            // Register strongly-referenced listener to prevent GC from collecting JNA callback
-            this.mediaPlayer.raw().mediaPlayer().events().addMediaPlayerEventListener(this.mediaEventListener);
-
             this.mediaPlayer.start(this.video.getMediaUri());
         } catch (Exception e) {
             TwCinematic.LOGGER.error("Failed to initialize WaterMedia VideoPlayer", e);
@@ -82,7 +54,13 @@ public class VideoScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
-        if (this.shouldClose || (this.mediaPlayer != null && (this.mediaPlayer.isEnded() || this.mediaPlayer.isBroken()))) {
+        if (this.mediaPlayer == null) {
+            return;
+        }
+
+        // Poll playback status directly without event listeners
+        if (this.mediaPlayer.isEnded() || this.mediaPlayer.isBroken() ||
+           (this.mediaPlayer.isStopped() && !this.mediaPlayer.isReady() && !this.mediaPlayer.isWaiting() && !this.mediaPlayer.isLoading())) {
             this.closeAndCleanup();
         }
     }
@@ -91,16 +69,17 @@ public class VideoScreen extends Screen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        if (this.shouldClose || (this.mediaPlayer != null && (this.mediaPlayer.isEnded() || this.mediaPlayer.isBroken() ||
-           (this.mediaPlayer.isStopped() && !this.mediaPlayer.isReady() && !this.mediaPlayer.isWaiting() && !this.mediaPlayer.isLoading())))) {
-            this.closeAndCleanup();
+        if (this.mediaPlayer == null) {
+            guiGraphics.fill(0, 0, this.width, this.height, 0xFF000000);
             return;
         }
 
-        if (this.mediaPlayer == null) return;
-
         int textureId = this.mediaPlayer.texture();
-        if (textureId <= 0) return;
+        if (textureId <= 0) {
+            // Render black screen while first frame loads
+            guiGraphics.fill(0, 0, this.width, this.height, 0xFF000000);
+            return;
+        }
 
         int width = this.width;
         int height = this.height;
@@ -125,12 +104,13 @@ public class VideoScreen extends Screen {
     }
 
     private void closeAndCleanup() {
-        if (isReleased.compareAndSet(false, true)) {
+        if (cleanedUp.compareAndSet(false, true)) {
             if (this.mediaPlayer != null) {
                 try {
+                    this.mediaPlayer.pause();
                     this.mediaPlayer.stop();
                     this.mediaPlayer.release();
-                } catch (Exception ignored) {}
+                } catch (Throwable ignored) {}
                 this.mediaPlayer = null;
             }
             if (this.minecraft != null) {
