@@ -15,9 +15,14 @@ import net.minecraft.network.chat.Component;
 import org.joml.Matrix4f;
 import org.watermedia.api.player.videolan.VideoPlayer;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VideoScreen extends Screen {
+    private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
+
     private final Video video;
     private final int volume;
     private VideoPlayer mediaPlayer;
@@ -40,13 +45,14 @@ public class VideoScreen extends Screen {
         }
 
         try {
+            TwCinematic.LOGGER.info("Starting cinematic video playback: {} (Volume: {})", this.video.getName(), this.volume);
             // Initialize VideoPlayer with Minecraft as the render executor.
             // DO NOT register any VLC EventListeners/EventAdapters to avoid JNA garbage collection crashes!
             this.mediaPlayer = new VideoPlayer(Minecraft.getInstance());
             this.mediaPlayer.setVolume(this.volume);
             this.mediaPlayer.start(this.video.getMediaUri());
         } catch (Exception e) {
-            TwCinematic.LOGGER.error("Failed to initialize WaterMedia VideoPlayer", e);
+            TwCinematic.LOGGER.error("Failed to initialize WaterMedia VideoPlayer for video: {}", this.video.getName(), e);
             this.closeAndCleanup();
         }
     }
@@ -59,8 +65,14 @@ public class VideoScreen extends Screen {
         }
 
         // Poll playback status directly without event listeners
-        if (this.mediaPlayer.isEnded() || this.mediaPlayer.isBroken() ||
-           (this.mediaPlayer.isStopped() && !this.mediaPlayer.isReady() && !this.mediaPlayer.isWaiting() && !this.mediaPlayer.isLoading())) {
+        if (this.mediaPlayer.isEnded()) {
+            TwCinematic.LOGGER.info("Cinematic video ended naturally: {}", this.video.getName());
+            this.closeAndCleanup();
+        } else if (this.mediaPlayer.isBroken()) {
+            TwCinematic.LOGGER.error("Cinematic video player entered broken state: {}", this.video.getName());
+            this.closeAndCleanup();
+        } else if (this.mediaPlayer.isStopped() && !this.mediaPlayer.isReady() && !this.mediaPlayer.isWaiting() && !this.mediaPlayer.isLoading()) {
+            TwCinematic.LOGGER.info("Cinematic video player stopped: {}", this.video.getName());
             this.closeAndCleanup();
         }
     }
@@ -104,24 +116,36 @@ public class VideoScreen extends Screen {
     }
 
     private void closeAndCleanup() {
-        if (cleanedUp.compareAndSet(false, true)) {
-            if (this.mediaPlayer != null) {
-                try {
-                    this.mediaPlayer.pause();
-                    this.mediaPlayer.stop();
-                    this.mediaPlayer.release();
-                } catch (Throwable ignored) {}
-                this.mediaPlayer = null;
-            }
+        if (this.cleanedUp.compareAndSet(false, true)) {
+            TwCinematic.LOGGER.info("Closing cinematic screen and scheduling player release for: {}", this.video.getName());
+            final VideoPlayer playerToRelease = this.mediaPlayer;
+            this.mediaPlayer = null;
+
             if (this.minecraft != null) {
                 this.minecraft.options.hideGui = this.wasHudHidden;
                 this.minecraft.mouseHandler.grabMouse();
             }
+
+            // Immediately close the screen on Minecraft's main thread
             Minecraft.getInstance().tell(() -> {
                 if (Minecraft.getInstance().screen == this) {
                     Minecraft.getInstance().setScreen(null);
                 }
             });
+
+            // Retain strong reference to playerToRelease and delay stop/release by 1 second
+            // so VLC native threads finish processing and do not invoke GC'd JNA callbacks.
+            if (playerToRelease != null) {
+                EXECUTOR.schedule(() -> {
+                    try {
+                        playerToRelease.stop();
+                        playerToRelease.release();
+                        TwCinematic.LOGGER.info("Successfully released VideoPlayer for: {}", this.video.getName());
+                    } catch (Exception e) {
+                        TwCinematic.LOGGER.error("Error releasing video player for: {}", this.video.getName(), e);
+                    }
+                }, 1, TimeUnit.SECONDS);
+            }
         }
     }
 
@@ -159,12 +183,14 @@ public class VideoScreen extends Screen {
 
     @Override
     public void onClose() {
+        TwCinematic.LOGGER.info("VideoScreen onClose called for: {}", this.video.getName());
         this.closeAndCleanup();
         super.onClose();
     }
 
     @Override
     public void removed() {
+        TwCinematic.LOGGER.info("VideoScreen removed called for: {}", this.video.getName());
         this.closeAndCleanup();
         super.removed();
     }
