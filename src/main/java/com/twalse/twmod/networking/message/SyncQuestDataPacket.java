@@ -2,6 +2,7 @@ package com.twalse.twmod.networking.message;
 
 import com.twalse.twmod.quest.ClientQuestData;
 import com.twalse.twmod.quest.QuestData;
+import com.twalse.twmod.quest.WaypointData;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -16,10 +17,12 @@ import java.util.function.Supplier;
 public class SyncQuestDataPacket {
     public final Map<String, Integer> variables;
     public final List<QuestData> quests;
+    public final List<WaypointData> waypoints;
 
-    public SyncQuestDataPacket(Map<String, Integer> variables, List<QuestData> quests) {
+    public SyncQuestDataPacket(Map<String, Integer> variables, List<QuestData> quests, List<WaypointData> waypoints) {
         this.variables = variables != null ? variables : new LinkedHashMap<>();
         this.quests = quests != null ? quests : new ArrayList<>();
+        this.waypoints = waypoints != null ? waypoints : new ArrayList<>();
     }
 
     public static void encode(SyncQuestDataPacket msg, FriendlyByteBuf buf) {
@@ -35,6 +38,16 @@ public class SyncQuestDataPacket {
             buf.writeUtf(quest.getDescription());
             buf.writeInt(quest.getCurrentProgress());
             buf.writeInt(quest.getMaxProgress());
+        }
+
+        buf.writeInt(msg.waypoints.size());
+        for (WaypointData waypoint : msg.waypoints) {
+            buf.writeUtf(waypoint.getId());
+            buf.writeDouble(waypoint.getX());
+            buf.writeDouble(waypoint.getY());
+            buf.writeDouble(waypoint.getZ());
+            buf.writeInt(waypoint.getColor());
+            buf.writeUtf(waypoint.getName());
         }
     }
 
@@ -57,14 +70,26 @@ public class SyncQuestDataPacket {
             qList.add(new QuestData(id, desc, cur, max));
         }
 
-        return new SyncQuestDataPacket(vars, qList);
+        int waypointsSize = buf.readInt();
+        List<WaypointData> wList = new ArrayList<>();
+        for (int i = 0; i < waypointsSize; i++) {
+            String id = buf.readUtf();
+            double x = buf.readDouble();
+            double y = buf.readDouble();
+            double z = buf.readDouble();
+            int color = buf.readInt();
+            String name = buf.readUtf();
+            wList.add(new WaypointData(id, x, y, z, color, name));
+        }
+
+        return new SyncQuestDataPacket(vars, qList, wList);
     }
 
     public static void handle(SyncQuestDataPacket msg, Supplier<NetworkEvent.Context> ctxSupplier) {
         NetworkEvent.Context ctx = ctxSupplier.get();
         ctx.enqueueWork(() -> {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                ClientQuestData.set(msg.variables, msg.quests);
+                ClientQuestData.set(msg.variables, msg.quests, msg.waypoints);
             });
         });
         ctx.setPacketHandled(true);

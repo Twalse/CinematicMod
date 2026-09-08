@@ -56,7 +56,8 @@ public class PacketHandler {
         player.getCapability(PlayerQuestProvider.PLAYER_QUEST).ifPresent(data -> {
             sendToPlayer(new SyncQuestDataPacket(
                     data.getVariables(),
-                    new ArrayList<>(data.getQuests().values())
+                    new ArrayList<>(data.getQuests().values()),
+                    new ArrayList<>(data.getWaypoints().values())
             ), player);
         });
     }

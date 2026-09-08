@@ -11,6 +11,7 @@ import java.util.Map;
 public class PlayerQuestData {
     private final Map<String, Integer> variables = new LinkedHashMap<>();
     private final Map<String, QuestData> quests = new LinkedHashMap<>();
+    private final Map<String, WaypointData> waypoints = new LinkedHashMap<>();
 
     public Map<String, Integer> getVariables() {
         return Collections.unmodifiableMap(variables);
@@ -30,6 +31,12 @@ public class PlayerQuestData {
         if (varId != null && !varId.isEmpty()) {
             int current = variables.getOrDefault(varId, 0);
             variables.put(varId, current + amount);
+        }
+    }
+
+    public void removeVariable(String varId) {
+        if (varId != null) {
+            variables.remove(varId);
         }
     }
 
@@ -64,13 +71,40 @@ public class PlayerQuestData {
         quests.remove(questId);
     }
 
+    public Map<String, WaypointData> getWaypoints() {
+        return Collections.unmodifiableMap(waypoints);
+    }
+
+    public WaypointData getWaypoint(String waypointId) {
+        return waypoints.get(waypointId);
+    }
+
+    public void addWaypoint(WaypointData waypoint) {
+        if (waypoint != null && waypoint.getId() != null && !waypoint.getId().isEmpty()) {
+            waypoints.put(waypoint.getId(), waypoint);
+        }
+    }
+
+    public void removeWaypoint(String waypointId) {
+        if (waypointId != null) {
+            waypoints.remove(waypointId);
+        }
+    }
+
     public void copyFrom(PlayerQuestData source) {
         this.variables.clear();
         this.variables.putAll(source.variables);
+
         this.quests.clear();
         for (Map.Entry<String, QuestData> entry : source.quests.entrySet()) {
             QuestData q = entry.getValue();
             this.quests.put(entry.getKey(), new QuestData(q.getId(), q.getDescription(), q.getCurrentProgress(), q.getMaxProgress()));
+        }
+
+        this.waypoints.clear();
+        for (Map.Entry<String, WaypointData> entry : source.waypoints.entrySet()) {
+            WaypointData w = entry.getValue();
+            this.waypoints.put(entry.getKey(), new WaypointData(w.getId(), w.getX(), w.getY(), w.getZ(), w.getColor(), w.getName()));
         }
     }
 
@@ -86,6 +120,12 @@ public class PlayerQuestData {
             questList.add(quest.saveNBT());
         }
         tag.put("Quests", questList);
+
+        ListTag waypointList = new ListTag();
+        for (WaypointData waypoint : waypoints.values()) {
+            waypointList.add(waypoint.saveNBT());
+        }
+        tag.put("Waypoints", waypointList);
     }
 
     public void loadNBTData(CompoundTag tag) {
@@ -104,6 +144,16 @@ public class PlayerQuestData {
                 CompoundTag qTag = questList.getCompound(i);
                 QuestData q = QuestData.loadNBT(qTag);
                 quests.put(q.getId(), q);
+            }
+        }
+
+        waypoints.clear();
+        if (tag.contains("Waypoints", Tag.TAG_LIST)) {
+            ListTag waypointList = tag.getList("Waypoints", Tag.TAG_COMPOUND);
+            for (int i = 0; i < waypointList.size(); i++) {
+                CompoundTag wTag = waypointList.getCompound(i);
+                WaypointData w = WaypointData.loadNBT(wTag);
+                waypoints.put(w.getId(), w);
             }
         }
     }

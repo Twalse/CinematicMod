@@ -3,7 +3,9 @@ package com.twalse.twmod.commands;
 import com.twalse.twmod.networking.PacketHandler;
 import com.twalse.twmod.networking.message.OpenAdminScreenPacket;
 import com.twalse.twmod.quest.PlayerQuestProvider;
+import com.twalse.twmod.quest.WaypointData;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
@@ -52,6 +54,17 @@ public class TwCommand {
                                     IntegerArgumentType.getInteger(ctx, "value")
                                 ))
                             )
+                        )
+                    )
+                )
+                .then(Commands.literal("remove")
+                    .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("var_id", StringArgumentType.string())
+                            .executes(ctx -> removeVariable(
+                                ctx.getSource(),
+                                EntityArgument.getPlayers(ctx, "targets"),
+                                StringArgumentType.getString(ctx, "var_id")
+                            ))
                         )
                     )
                 )
@@ -109,6 +122,47 @@ public class TwCommand {
                     )
                 )
             )
+
+            // 3D Waypoints commands
+            .then(Commands.literal("waypoint")
+                .then(Commands.literal("add")
+                    .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("id", StringArgumentType.string())
+                            .then(Commands.argument("x", DoubleArgumentType.doubleArg())
+                                .then(Commands.argument("y", DoubleArgumentType.doubleArg())
+                                    .then(Commands.argument("z", DoubleArgumentType.doubleArg())
+                                        .then(Commands.argument("colorHex", StringArgumentType.string())
+                                            .then(Commands.argument("name", StringArgumentType.string())
+                                                .executes(ctx -> addWaypoint(
+                                                    ctx.getSource(),
+                                                    EntityArgument.getPlayers(ctx, "targets"),
+                                                    StringArgumentType.getString(ctx, "id"),
+                                                    DoubleArgumentType.getDouble(ctx, "x"),
+                                                    DoubleArgumentType.getDouble(ctx, "y"),
+                                                    DoubleArgumentType.getDouble(ctx, "z"),
+                                                    StringArgumentType.getString(ctx, "colorHex"),
+                                                    StringArgumentType.getString(ctx, "name")
+                                                ))
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+                .then(Commands.literal("remove")
+                    .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("id", StringArgumentType.string())
+                            .executes(ctx -> removeWaypoint(
+                                ctx.getSource(),
+                                EntityArgument.getPlayers(ctx, "targets"),
+                                StringArgumentType.getString(ctx, "id")
+                            ))
+                        )
+                    )
+                )
+            )
         );
     }
 
@@ -146,6 +200,17 @@ public class TwCommand {
         return targets.size();
     }
 
+    private static int removeVariable(CommandSourceStack source, Collection<ServerPlayer> targets, String varId) {
+        for (ServerPlayer player : targets) {
+            player.getCapability(PlayerQuestProvider.PLAYER_QUEST).ifPresent(data -> {
+                data.removeVariable(varId);
+                PacketHandler.syncQuestData(player);
+            });
+        }
+        source.sendSuccess(() -> Component.literal("Removed variable '" + varId + "' for " + targets.size() + " player(s)."), true);
+        return targets.size();
+    }
+
     private static int setQuest(CommandSourceStack source, Collection<ServerPlayer> targets, String questId, String description, int maxProgress) {
         for (ServerPlayer player : targets) {
             player.getCapability(PlayerQuestProvider.PLAYER_QUEST).ifPresent(data -> {
@@ -176,6 +241,37 @@ public class TwCommand {
             });
         }
         source.sendSuccess(() -> Component.literal("Removed quest '" + questId + "' for " + targets.size() + " player(s)."), true);
+        return targets.size();
+    }
+
+    private static int addWaypoint(CommandSourceStack source, Collection<ServerPlayer> targets, String id, double x, double y, double z, String colorHex, String name) {
+        int color = 0xFFFFFF;
+        try {
+            String cleanHex = colorHex.replace("#", "").replace("0x", "");
+            color = (int) Long.parseLong(cleanHex, 16);
+        } catch (Exception ignored) {}
+
+        final int finalColor = color;
+        WaypointData waypoint = new WaypointData(id, x, y, z, finalColor, name);
+
+        for (ServerPlayer player : targets) {
+            player.getCapability(PlayerQuestProvider.PLAYER_QUEST).ifPresent(data -> {
+                data.addWaypoint(waypoint);
+                PacketHandler.syncQuestData(player);
+            });
+        }
+        source.sendSuccess(() -> Component.literal("Added 3D waypoint '" + name + "' (ID: " + id + ") for " + targets.size() + " player(s)."), true);
+        return targets.size();
+    }
+
+    private static int removeWaypoint(CommandSourceStack source, Collection<ServerPlayer> targets, String id) {
+        for (ServerPlayer player : targets) {
+            player.getCapability(PlayerQuestProvider.PLAYER_QUEST).ifPresent(data -> {
+                data.removeWaypoint(id);
+                PacketHandler.syncQuestData(player);
+            });
+        }
+        source.sendSuccess(() -> Component.literal("Removed 3D waypoint '" + id + "' for " + targets.size() + " player(s)."), true);
         return targets.size();
     }
 }

@@ -13,10 +13,12 @@ import java.util.Map;
 public class ClientQuestData {
     private static Map<String, Integer> variables = new LinkedHashMap<>();
     private static List<QuestData> quests = new ArrayList<>();
+    private static List<WaypointData> waypoints = new ArrayList<>();
 
-    public static void set(Map<String, Integer> vars, List<QuestData> qList) {
+    public static void set(Map<String, Integer> vars, List<QuestData> qList, List<WaypointData> wList) {
         variables = vars != null ? new LinkedHashMap<>(vars) : new LinkedHashMap<>();
         quests = qList != null ? new ArrayList<>(qList) : new ArrayList<>();
+        waypoints = wList != null ? new ArrayList<>(wList) : new ArrayList<>();
     }
 
     public static Map<String, Integer> getVariables() {
@@ -25,5 +27,9 @@ public class ClientQuestData {
 
     public static List<QuestData> getQuests() {
         return Collections.unmodifiableList(quests);
+    }
+
+    public static List<WaypointData> getWaypoints() {
+        return Collections.unmodifiableList(waypoints);
     }
 }
