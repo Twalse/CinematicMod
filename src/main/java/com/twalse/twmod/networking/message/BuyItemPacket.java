@@ -6,10 +6,12 @@ import com.twalse.twmod.quest.PlayerQuestProvider;
 import com.twalse.twmod.util.TwLogger;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.function.Supplier;
 
@@ -39,15 +41,28 @@ public class BuyItemPacket {
                     int price = 0;
                     ItemStack rewardStack = ItemStack.EMPTY;
 
-                    if ("heavy_cargo".equalsIgnoreCase(msg.itemId)) {
-                        price = 100;
-                        rewardStack = new ItemStack(ModItems.HEAVY_CARGO.get());
-                    } else if ("medkit".equalsIgnoreCase(msg.itemId)) {
+                    if ("lockpick".equalsIgnoreCase(msg.itemId)) {
                         price = 50;
-                        rewardStack = new ItemStack(Items.GOLDEN_APPLE);
-                    } else if ("lockpick_kit".equalsIgnoreCase(msg.itemId)) {
-                        price = 30;
-                        rewardStack = new ItemStack(Items.IRON_INGOT, 2);
+                        rewardStack = new ItemStack(ModItems.LOCKPICK.get());
+                    } else if ("medkit".equalsIgnoreCase(msg.itemId)) {
+                        price = 200;
+                        rewardStack = new ItemStack(ModItems.MEDKIT.get());
+                    } else if ("syringe".equalsIgnoreCase(msg.itemId)) {
+                        price = 150;
+                        rewardStack = new ItemStack(ModItems.SYRINGE.get());
+                    } else if ("tacz_9mm".equalsIgnoreCase(msg.itemId)) {
+                        price = 100;
+                        Item ammoItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation("tacz", "ammo"));
+                        if (ammoItem != null) {
+                            rewardStack = new ItemStack(ammoItem, 30);
+                            rewardStack.getOrCreateTag().putString("AmmoId", "tacz:9mm");
+                        } else {
+                            // Fallback if TacZ is not present
+                            rewardStack = new ItemStack(ModItems.LOCKPICK.get(), 2);
+                        }
+                    } else if ("heavy_cargo".equalsIgnoreCase(msg.itemId)) {
+                        price = 300;
+                        rewardStack = new ItemStack(ModItems.HEAVY_CARGO.get());
                     }
 
                     if (price > 0 && !rewardStack.isEmpty()) {

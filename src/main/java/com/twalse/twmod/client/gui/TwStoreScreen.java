@@ -8,8 +8,8 @@ import net.minecraft.network.chat.Component;
 
 public class TwStoreScreen extends Screen {
     private final Screen parent;
-    private static final int PHONE_WIDTH = 140;
-    private static final int PHONE_HEIGHT = 250;
+    private static final int PHONE_WIDTH = 150;
+    private static final int PHONE_HEIGHT = 260;
 
     public TwStoreScreen(Screen parent) {
         super(Component.literal("TwStore"));
@@ -27,28 +27,29 @@ public class TwStoreScreen extends Screen {
         int buttonY = phoneY + 45;
 
         // Install Dino Game
-        this.addRenderableWidget(Button.builder(Component.literal(ClientQuestData.isAppInstalled("dino") ? "✓ Dino" : "📥 Dino Game"), btn -> {
+        this.addRenderableWidget(Button.builder(Component.literal(ClientQuestData.isAppInstalled("dino") ? "✓ Dino Game" : "📥 Dino Game"), btn -> {
             if (this.minecraft != null && this.minecraft.player != null) {
-                this.minecraft.player.connection.sendCommand("tw var add @s install_dino 1");
+                this.minecraft.player.connection.sendCommand("tw phone install @s dino");
             }
-            btn.setMessage(Component.literal("✓ Dino"));
-        }).bounds(phoneX + 12, buttonY, 116, 24).build());
+            btn.setMessage(Component.literal("✓ Dino Game"));
+        }).bounds(phoneX + 12, buttonY, 126, 24).build());
 
         // Install TwGramm
         this.addRenderableWidget(Button.builder(Component.literal(ClientQuestData.isAppInstalled("twgramm") ? "✓ TwGramm" : "📥 TwGramm"), btn -> {
             if (this.minecraft != null && this.minecraft.player != null) {
-                this.minecraft.player.connection.sendCommand("tw var add @s install_twgramm 1");
+                this.minecraft.player.connection.sendCommand("tw phone install @s twgramm");
             }
             btn.setMessage(Component.literal("✓ TwGramm"));
-        }).bounds(phoneX + 12, buttonY + 30, 116, 24).build());
+        }).bounds(phoneX + 12, buttonY + 30, 126, 24).build());
 
         // Install Camera & Gallery
-        this.addRenderableWidget(Button.builder(Component.literal(ClientQuestData.isAppInstalled("camera") ? "✓ Camera" : "📥 Camera Suite"), btn -> {
+        this.addRenderableWidget(Button.builder(Component.literal(ClientQuestData.isAppInstalled("camera") ? "✓ Camera Suite" : "📥 Camera Suite"), btn -> {
             if (this.minecraft != null && this.minecraft.player != null) {
-                this.minecraft.player.connection.sendCommand("tw var add @s install_camera 1");
+                this.minecraft.player.connection.sendCommand("tw phone install @s camera");
+                this.minecraft.player.connection.sendCommand("tw phone install @s gallery");
             }
-            btn.setMessage(Component.literal("✓ Camera"));
-        }).bounds(phoneX + 12, buttonY + 60, 116, 24).build());
+            btn.setMessage(Component.literal("✓ Camera Suite"));
+        }).bounds(phoneX + 12, buttonY + 60, 126, 24).build());
     }
 
     @Override

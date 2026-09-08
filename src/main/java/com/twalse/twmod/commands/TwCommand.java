@@ -39,6 +39,17 @@ public class TwCommand {
                         ))
                     )
                 )
+                .then(Commands.literal("install")
+                    .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("app_id", StringArgumentType.string())
+                            .executes(ctx -> installApp(
+                                ctx.getSource(),
+                                EntityArgument.getPlayers(ctx, "targets"),
+                                StringArgumentType.getString(ctx, "app_id")
+                            ))
+                        )
+                    )
+                )
             )
 
             // Minigames
@@ -216,6 +227,17 @@ public class TwCommand {
             PacketHandler.sendToPlayer(packet, player);
         }
         source.sendSuccess(() -> Component.literal("Opened Smartphone for " + targets.size() + " player(s)."), true);
+        return targets.size();
+    }
+
+    private static int installApp(CommandSourceStack source, Collection<ServerPlayer> targets, String appId) {
+        for (ServerPlayer player : targets) {
+            player.getCapability(PlayerQuestProvider.PLAYER_QUEST).ifPresent(data -> {
+                data.installApp(appId);
+                PacketHandler.syncQuestData(player);
+            });
+        }
+        source.sendSuccess(() -> Component.literal("Installed app '" + appId + "' for " + targets.size() + " player(s)."), true);
         return targets.size();
     }
 

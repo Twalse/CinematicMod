@@ -12,8 +12,8 @@ import java.util.Map;
 
 public class MarketAppScreen extends Screen {
     private final Screen parent;
-    private static final int PHONE_WIDTH = 140;
-    private static final int PHONE_HEIGHT = 250;
+    private static final int PHONE_WIDTH = 150;
+    private static final int PHONE_HEIGHT = 260;
 
     public MarketAppScreen(Screen parent) {
         super(Component.literal("Market"));
@@ -28,22 +28,32 @@ public class MarketAppScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        int buttonY = phoneY + 65;
+        int buttonY = phoneY + 55;
 
-        // Item 1: Heavy Cargo (100)
-        this.addRenderableWidget(Button.builder(Component.literal("📦 Груз (100🪙)"), btn -> {
-            PacketHandler.sendToServer(new BuyItemPacket("heavy_cargo"));
-        }).bounds(phoneX + 12, buttonY, 116, 24).build());
+        // Item 1: Lockpick ($50)
+        this.addRenderableWidget(Button.builder(Component.literal("🛠️ Отмычка (50🪙)"), btn -> {
+            PacketHandler.sendToServer(new BuyItemPacket("lockpick"));
+        }).bounds(phoneX + 10, buttonY, 130, 22).build());
 
-        // Item 2: Medkit (50)
-        this.addRenderableWidget(Button.builder(Component.literal("🍎 Аптечка (50🪙)"), btn -> {
+        // Item 2: Medkit ($200)
+        this.addRenderableWidget(Button.builder(Component.literal("🩹 Аптечка (200🪙)"), btn -> {
             PacketHandler.sendToServer(new BuyItemPacket("medkit"));
-        }).bounds(phoneX + 12, buttonY + 30, 116, 24).build());
+        }).bounds(phoneX + 10, buttonY + 26, 130, 22).build());
 
-        // Item 3: Lockpick Kit (30)
-        this.addRenderableWidget(Button.builder(Component.literal("🛠️ Набор (30🪙)"), btn -> {
-            PacketHandler.sendToServer(new BuyItemPacket("lockpick_kit"));
-        }).bounds(phoneX + 12, buttonY + 60, 116, 24).build());
+        // Item 3: Syringe ($150)
+        this.addRenderableWidget(Button.builder(Component.literal("💉 Шприц (150🪙)"), btn -> {
+            PacketHandler.sendToServer(new BuyItemPacket("syringe"));
+        }).bounds(phoneX + 10, buttonY + 52, 130, 22).build());
+
+        // Item 4: TacZ 9mm Ammo ($100)
+        this.addRenderableWidget(Button.builder(Component.literal("🔫 Патроны 9mm (100🪙)"), btn -> {
+            PacketHandler.sendToServer(new BuyItemPacket("tacz_9mm"));
+        }).bounds(phoneX + 10, buttonY + 78, 130, 22).build());
+
+        // Item 5: Heavy Cargo ($300)
+        this.addRenderableWidget(Button.builder(Component.literal("📦 Контрабанда (300🪙)"), btn -> {
+            PacketHandler.sendToServer(new BuyItemPacket("heavy_cargo"));
+        }).bounds(phoneX + 10, buttonY + 104, 130, 22).build());
     }
 
     @Override
@@ -79,12 +89,12 @@ public class MarketAppScreen extends Screen {
         guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0D0D11);
 
         // Header
-        guiGraphics.drawCenteredString(this.font, "ДАРКНЕТ МАРКЕТ", centerX, phoneY + 18, 0xFFD4AF37);
+        guiGraphics.drawCenteredString(this.font, "ДАРКНЕТ МАРКЕТ", centerX, phoneY + 16, 0xFFD4AF37);
 
         // Display current money balance
         Map<String, Integer> vars = ClientQuestData.getVariables();
         int money = vars.getOrDefault("money", vars.getOrDefault("coins", 0));
-        guiGraphics.drawCenteredString(this.font, "Баланс: " + money + " 🪙", centerX, phoneY + 38, 0xFFFF55);
+        guiGraphics.drawCenteredString(this.font, "Баланс: " + money + " 🪙", centerX, phoneY + 34, 0xFFFF55);
 
         // Bottom Home Button
         int homeBtnX = centerX - 15;

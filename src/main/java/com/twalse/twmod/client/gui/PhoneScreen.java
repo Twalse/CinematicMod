@@ -10,8 +10,8 @@ import java.util.List;
 
 public class PhoneScreen extends Screen {
 
-    private static final int PHONE_WIDTH = 140;
-    private static final int PHONE_HEIGHT = 250;
+    private static final int PHONE_WIDTH = 150;
+    private static final int PHONE_HEIGHT = 260;
 
     public record AppEntry(String id, String name, String iconSymbol, int color, java.util.function.Consumer<PhoneScreen> action) {}
 
@@ -48,11 +48,11 @@ public class PhoneScreen extends Screen {
 
         // Check App Icon Clicks in Grid Layout (3 Columns x 4 Rows)
         List<AppEntry> installed = getInstalledAppEntries();
-        int gridStartX = phoneX + 12;
+        int gridStartX = phoneX + 16;
         int gridStartY = phoneY + 35;
-        int iconSize = 32;
-        int gapX = 8;
-        int gapY = 12;
+        int iconSize = 30;
+        int gapX = 14;
+        int gapY = 18;
 
         for (int i = 0; i < installed.size(); i++) {
             int col = i % 3;
@@ -90,13 +90,20 @@ public class PhoneScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // 1. Phone Outer Frame (Bezel)
-        guiGraphics.fill(phoneX - 6, phoneY - 10, phoneX + PHONE_WIDTH + 6, phoneY + PHONE_HEIGHT + 10, 0xFF1C1C1E);
-        guiGraphics.fill(phoneX - 4, phoneY - 8, phoneX + PHONE_WIDTH + 4, phoneY + PHONE_HEIGHT + 8, 0xFF2C2C2E);
+        // 1. Phone Outer Bezel Frame with Rounded Corner Effect
+        guiGraphics.fill(phoneX - 8, phoneY - 12, phoneX + PHONE_WIDTH + 8, phoneY + PHONE_HEIGHT + 12, 0xFF111113);
+        guiGraphics.fill(phoneX - 6, phoneY - 10, phoneX + PHONE_WIDTH + 6, phoneY + PHONE_HEIGHT + 10, 0xFF222225);
+        guiGraphics.fill(phoneX - 4, phoneY - 8, phoneX + PHONE_WIDTH + 4, phoneY + PHONE_HEIGHT + 8, 0xFF18181A);
 
-        // 2. Phone Screen Wallpaper Display (Dark Blue Gradient Wallpaper)
-        guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0A0F1D);
-        guiGraphics.fill(phoneX, phoneY + 100, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF141E30);
+        // Rounded Bezel Corners (Clip Outer Edges)
+        guiGraphics.fill(phoneX - 8, phoneY - 12, phoneX - 5, phoneY - 9, 0x00000000);
+        guiGraphics.fill(phoneX + PHONE_WIDTH + 5, phoneY - 12, phoneX + PHONE_WIDTH + 8, phoneY - 9, 0x00000000);
+        guiGraphics.fill(phoneX - 8, phoneY + PHONE_HEIGHT + 9, phoneX - 5, phoneY + PHONE_HEIGHT + 12, 0x00000000);
+        guiGraphics.fill(phoneX + PHONE_WIDTH + 5, phoneY + PHONE_HEIGHT + 9, phoneX + PHONE_WIDTH + 8, phoneY + PHONE_HEIGHT + 12, 0x00000000);
+
+        // 2. Phone Screen Display (Dark Blue Gradient Wallpaper)
+        guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0B1021);
+        guiGraphics.fill(phoneX, phoneY + 110, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF162238);
 
         // 3. Notch & Camera
         guiGraphics.fill(centerX - 18, phoneY - 5, centerX + 18, phoneY - 2, 0xFF000000);
@@ -107,11 +114,11 @@ public class PhoneScreen extends Screen {
 
         // 5. Desktop App Icons Grid
         List<AppEntry> installed = getInstalledAppEntries();
-        int gridStartX = phoneX + 12;
-        int gridStartY = phoneY + 30;
-        int iconSize = 32;
-        int gapX = 8;
-        int gapY = 12;
+        int gridStartX = phoneX + 16;
+        int gridStartY = phoneY + 35;
+        int iconSize = 30;
+        int gapX = 14;
+        int gapY = 18;
 
         for (int i = 0; i < installed.size(); i++) {
             AppEntry app = installed.get(i);
@@ -126,10 +133,19 @@ public class PhoneScreen extends Screen {
 
             // App Icon Box
             guiGraphics.fill(ix, iy, ix + iconSize, iy + iconSize, bgColor);
-            guiGraphics.drawCenteredString(this.font, app.iconSymbol(), ix + iconSize / 2, iy + 10, 0xFFFFFF);
+            guiGraphics.drawCenteredString(this.font, app.iconSymbol(), ix + iconSize / 2, iy + 9, 0xFFFFFF);
 
-            // App Label
-            guiGraphics.drawCenteredString(this.font, app.name(), ix + iconSize / 2, iy + iconSize + 2, 0xEEEEEE);
+            // Scaled App Label (0.75f) to fit neatly without overlapping
+            guiGraphics.pose().pushPose();
+            float labelScale = 0.75f;
+            float iconCenterX = ix + iconSize / 2.0f;
+            float labelY = iy + iconSize + 3;
+
+            guiGraphics.pose().translate(iconCenterX, labelY, 0);
+            guiGraphics.pose().scale(labelScale, labelScale, 1.0f);
+
+            guiGraphics.drawCenteredString(this.font, app.name(), 0, 0, 0xFFEEEEEE);
+            guiGraphics.pose().popPose();
         }
 
         // 6. Bottom Dock Bar
