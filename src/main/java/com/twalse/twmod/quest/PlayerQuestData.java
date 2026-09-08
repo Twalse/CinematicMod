@@ -2,16 +2,48 @@ package com.twalse.twmod.quest;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class PlayerQuestData {
     private final Map<String, Integer> variables = new LinkedHashMap<>();
     private final Map<String, QuestData> quests = new LinkedHashMap<>();
     private final Map<String, WaypointData> waypoints = new LinkedHashMap<>();
+    private final Set<String> installedApps = new HashSet<>();
+
+    public PlayerQuestData() {
+        // Default installed apps
+        installedApps.add("contacts");
+        installedApps.add("market");
+        installedApps.add("twstore");
+    }
+
+    public Set<String> getInstalledApps() {
+        return Collections.unmodifiableSet(installedApps);
+    }
+
+    public boolean isAppInstalled(String appId) {
+        return installedApps.contains(appId.toLowerCase());
+    }
+
+    public void installApp(String appId) {
+        if (appId != null && !appId.isEmpty()) {
+            installedApps.add(appId.toLowerCase());
+        }
+    }
+
+    public void uninstallApp(String appId) {
+        if (appId != null) {
+            installedApps.remove(appId.toLowerCase());
+        }
+    }
 
     public Map<String, Integer> getVariables() {
         return Collections.unmodifiableMap(variables);
@@ -106,6 +138,9 @@ public class PlayerQuestData {
             WaypointData w = entry.getValue();
             this.waypoints.put(entry.getKey(), new WaypointData(w.getId(), w.getX(), w.getY(), w.getZ(), w.getColor(), w.getName()));
         }
+
+        this.installedApps.clear();
+        this.installedApps.addAll(source.installedApps);
     }
 
     public void saveNBTData(CompoundTag tag) {
@@ -126,6 +161,12 @@ public class PlayerQuestData {
             waypointList.add(waypoint.saveNBT());
         }
         tag.put("Waypoints", waypointList);
+
+        ListTag appList = new ListTag();
+        for (String app : installedApps) {
+            appList.add(StringTag.valueOf(app));
+        }
+        tag.put("InstalledApps", appList);
     }
 
     public void loadNBTData(CompoundTag tag) {
@@ -155,6 +196,18 @@ public class PlayerQuestData {
                 WaypointData w = WaypointData.loadNBT(wTag);
                 waypoints.put(w.getId(), w);
             }
+        }
+
+        installedApps.clear();
+        if (tag.contains("InstalledApps", Tag.TAG_LIST)) {
+            ListTag appList = tag.getList("InstalledApps", Tag.TAG_STRING);
+            for (int i = 0; i < appList.size(); i++) {
+                installedApps.add(appList.getString(i));
+            }
+        } else {
+            installedApps.add("contacts");
+            installedApps.add("market");
+            installedApps.add("twstore");
         }
     }
 }

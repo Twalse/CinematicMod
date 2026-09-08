@@ -1,85 +1,83 @@
 package com.twalse.twmod.client.gui;
 
 import com.twalse.twmod.quest.ClientQuestData;
-import com.twalse.twmod.quest.QuestData;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class PhoneScreen extends Screen {
 
-    public enum AppState {
-        HOME,
-        QUESTS,
-        BANK
-    }
-
-    private AppState currentState = AppState.HOME;
-
-    // Phone dimensions
     private static final int PHONE_WIDTH = 140;
     private static final int PHONE_HEIGHT = 250;
 
-    private Button questsAppButton;
-    private Button bankAppButton;
+    public record AppEntry(String id, String name, String iconSymbol, int color, java.util.function.Consumer<PhoneScreen> action) {}
+
+    private final List<AppEntry> availableApps = new ArrayList<>();
 
     public PhoneScreen() {
         super(Component.literal("Smartphone"));
-    }
 
-    @Override
-    protected void init() {
-        super.init();
-        updateWidgets();
-    }
+        // Register available apps in TwOS
+        availableApps.add(new AppEntry("contacts", "Контакты", "📞", 0xFF28A745, p -> p.minecraft.setScreen(new ContactsAppScreen(p))));
+        availableApps.add(new AppEntry("market", "Маркет", "💳", 0xFF6F42C1, p -> p.minecraft.setScreen(new MarketAppScreen(p))));
+        availableApps.add(new AppEntry("twstore", "TwStore", "🛍️", 0xFF007BFF, p -> p.minecraft.setScreen(new TwStoreScreen(p))));
 
-    private void updateWidgets() {
-        this.clearWidgets();
-
-        int centerX = this.width / 2;
-        int centerY = this.height / 2;
-        int phoneX = centerX - PHONE_WIDTH / 2;
-        int phoneY = centerY - PHONE_HEIGHT / 2;
-
-        if (currentState == AppState.HOME) {
-            // App 1: Contracts / Quests
-            this.questsAppButton = Button.builder(Component.literal("📜 Контракты"), btn -> {
-                this.currentState = AppState.QUESTS;
-                updateWidgets();
-            }).bounds(phoneX + 15, phoneY + 40, 110, 30).build();
-
-            // App 2: Darknet Bank
-            this.bankAppButton = Button.builder(Component.literal("💳 Даркнет-Банк"), btn -> {
-                this.currentState = AppState.BANK;
-                updateWidgets();
-            }).bounds(phoneX + 15, phoneY + 80, 110, 30).build();
-
-            this.addRenderableWidget(this.questsAppButton);
-            this.addRenderableWidget(this.bankAppButton);
-        }
+        availableApps.add(new AppEntry("dino", "Dino", "🦖", 0xFFDC3545, p -> p.minecraft.setScreen(new DinoGameScreen(p))));
+        availableApps.add(new AppEntry("twgramm", "TwGramm", "✈️", 0xFF17A2B8, p -> p.minecraft.setScreen(new TwGrammScreen(p))));
+        availableApps.add(new AppEntry("camera", "Камера", "📷", 0xFFFFC107, p -> p.minecraft.setScreen(new CameraAppScreen(p))));
+        availableApps.add(new AppEntry("gallery", "Галерея", "🖼️", 0xFFFD7E14, p -> p.minecraft.setScreen(new GalleryAppScreen(p))));
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
+
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // Check Home Button click at bottom center of phone
+        // Check Home Button click
         int homeBtnX = centerX - 15;
         int homeBtnY = phoneY + PHONE_HEIGHT - 22;
         if (mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12) {
-            this.currentState = AppState.HOME;
-            updateWidgets();
             return true;
         }
 
+        // Check App Icon Clicks in Grid Layout (3 Columns x 4 Rows)
+        List<AppEntry> installed = getInstalledAppEntries();
+        int gridStartX = phoneX + 12;
+        int gridStartY = phoneY + 35;
+        int iconSize = 32;
+        int gapX = 8;
+        int gapY = 12;
+
+        for (int i = 0; i < installed.size(); i++) {
+            int col = i % 3;
+            int row = i / 3;
+
+            int ix = gridStartX + col * (iconSize + gapX);
+            int iy = gridStartY + row * (iconSize + gapY);
+
+            if (mouseX >= ix && mouseX <= ix + iconSize && mouseY >= iy && mouseY <= iy + iconSize) {
+                installed.get(i).action().accept(this);
+                return true;
+            }
+        }
+
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private List<AppEntry> getInstalledAppEntries() {
+        List<AppEntry> installed = new ArrayList<>();
+        for (AppEntry app : availableApps) {
+            if (ClientQuestData.isAppInstalled(app.id())) {
+                installed.add(app);
+            }
+        }
+        return installed;
     }
 
     @Override
@@ -92,29 +90,53 @@ public class PhoneScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // 1. Phone Outer Frame (Gray/Black Bezel)
+        // 1. Phone Outer Frame (Bezel)
         guiGraphics.fill(phoneX - 6, phoneY - 10, phoneX + PHONE_WIDTH + 6, phoneY + PHONE_HEIGHT + 10, 0xFF1C1C1E);
         guiGraphics.fill(phoneX - 4, phoneY - 8, phoneX + PHONE_WIDTH + 4, phoneY + PHONE_HEIGHT + 8, 0xFF2C2C2E);
 
-        // 2. Phone Screen Display (Dark Background)
-        guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0D0D11);
+        // 2. Phone Screen Wallpaper Display (Dark Blue Gradient Wallpaper)
+        guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0A0F1D);
+        guiGraphics.fill(phoneX, phoneY + 100, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF141E30);
 
-        // 3. Top Speaker / Camera Notch
+        // 3. Notch & Camera
         guiGraphics.fill(centerX - 18, phoneY - 5, centerX + 18, phoneY - 2, 0xFF000000);
 
         // 4. Status Bar
-        guiGraphics.drawString(this.font, "12:00", phoneX + 8, phoneY + 6, 0x888888, false);
-        guiGraphics.drawString(this.font, "5G ⚡", phoneX + PHONE_WIDTH - 30, phoneY + 6, 0x888888, false);
-        guiGraphics.fill(phoneX + 6, phoneY + 18, phoneX + PHONE_WIDTH - 6, phoneY + 19, 0xFF333333);
+        guiGraphics.drawString(this.font, "12:00", phoneX + 8, phoneY + 6, 0xDDDDDD, false);
+        guiGraphics.drawString(this.font, "5G ⚡", phoneX + PHONE_WIDTH - 30, phoneY + 6, 0xDDDDDD, false);
 
-        // 5. Render Active App Content
-        switch (currentState) {
-            case HOME -> renderHomeApp(guiGraphics, phoneX, phoneY);
-            case QUESTS -> renderQuestsApp(guiGraphics, phoneX, phoneY);
-            case BANK -> renderBankApp(guiGraphics, phoneX, phoneY);
+        // 5. Desktop App Icons Grid
+        List<AppEntry> installed = getInstalledAppEntries();
+        int gridStartX = phoneX + 12;
+        int gridStartY = phoneY + 30;
+        int iconSize = 32;
+        int gapX = 8;
+        int gapY = 12;
+
+        for (int i = 0; i < installed.size(); i++) {
+            AppEntry app = installed.get(i);
+            int col = i % 3;
+            int row = i / 3;
+
+            int ix = gridStartX + col * (iconSize + gapX);
+            int iy = gridStartY + row * (iconSize + gapY);
+
+            boolean hovered = mouseX >= ix && mouseX <= ix + iconSize && mouseY >= iy && mouseY <= iy + iconSize;
+            int bgColor = hovered ? 0xFFFFFFFF : app.color();
+
+            // App Icon Box
+            guiGraphics.fill(ix, iy, ix + iconSize, iy + iconSize, bgColor);
+            guiGraphics.drawCenteredString(this.font, app.iconSymbol(), ix + iconSize / 2, iy + 10, 0xFFFFFF);
+
+            // App Label
+            guiGraphics.drawCenteredString(this.font, app.name(), ix + iconSize / 2, iy + iconSize + 2, 0xEEEEEE);
         }
 
-        // 6. Bottom Home Button
+        // 6. Bottom Dock Bar
+        int dockY = phoneY + PHONE_HEIGHT - 38;
+        guiGraphics.fill(phoneX + 8, dockY, phoneX + PHONE_WIDTH - 8, dockY + 1, 0x44FFFFFF);
+
+        // 7. Bottom Home Button
         int homeBtnX = centerX - 15;
         int homeBtnY = phoneY + PHONE_HEIGHT - 20;
         boolean homeHovered = mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12;
@@ -124,68 +146,6 @@ public class PhoneScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, "—", centerX, homeBtnY + 1, 0xFFFFFFFF);
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-    }
-
-    private void renderHomeApp(GuiGraphics guiGraphics, int phoneX, int phoneY) {
-        int centerX = phoneX + PHONE_WIDTH / 2;
-        guiGraphics.drawCenteredString(this.font, "TwPhone OS", centerX, phoneY + 24, 0xFFD4AF37);
-    }
-
-    private void renderQuestsApp(GuiGraphics guiGraphics, int phoneX, int phoneY) {
-        int centerX = phoneX + PHONE_WIDTH / 2;
-        guiGraphics.drawCenteredString(this.font, "АКТИВНЫЕ КОНТРАКТЫ", centerX, phoneY + 24, 0xFFD4AF37);
-
-        List<QuestData> quests = ClientQuestData.getQuests();
-        int contentY = phoneY + 40;
-
-        if (quests.isEmpty()) {
-            guiGraphics.drawCenteredString(this.font, "Нет активных контрактов", centerX, phoneY + 100, 0x777777);
-        } else {
-            for (QuestData quest : quests) {
-                if (contentY > phoneY + PHONE_HEIGHT - 35) break;
-
-                // Quest Card Box
-                guiGraphics.fill(phoneX + 8, contentY, phoneX + PHONE_WIDTH - 8, contentY + 36, 0xFF181820);
-                guiGraphics.fill(phoneX + 8, contentY, phoneX + 10, contentY + 36, 0xFFD4AF37);
-
-                guiGraphics.drawString(this.font, quest.getDescription(), phoneX + 14, contentY + 6, 0xFFFFFF, false);
-
-                if (quest.getMaxProgress() > 0) {
-                    String pStr = quest.getCurrentProgress() + " / " + quest.getMaxProgress();
-                    guiGraphics.drawString(this.font, pStr, phoneX + 14, contentY + 18, 0xAAAAAA, false);
-                }
-
-                contentY += 42;
-            }
-        }
-    }
-
-    private void renderBankApp(GuiGraphics guiGraphics, int phoneX, int phoneY) {
-        int centerX = phoneX + PHONE_WIDTH / 2;
-        guiGraphics.drawCenteredString(this.font, "ДАРКНЕТ-БАНК", centerX, phoneY + 24, 0xFFD4AF37);
-
-        Map<String, Integer> vars = ClientQuestData.getVariables();
-        int money = vars.getOrDefault("money", vars.getOrDefault("coins", 0));
-        int wanted = vars.getOrDefault("wanted", 0);
-
-        // Balance Card
-        int cardY = phoneY + 45;
-        guiGraphics.fill(phoneX + 10, cardY, phoneX + PHONE_WIDTH - 10, cardY + 50, 0xFF1C1C28);
-        guiGraphics.fill(phoneX + 10, cardY, phoneX + PHONE_WIDTH - 10, cardY + 2, 0xFFD4AF37);
-
-        guiGraphics.drawCenteredString(this.font, "Текущий баланс:", centerX, cardY + 8, 0xAAAAAA);
-        guiGraphics.drawCenteredString(this.font, money + " 🪙", centerX, cardY + 24, 0xFFFF55);
-
-        // Wanted Status Card
-        int wantedY = cardY + 65;
-        guiGraphics.fill(phoneX + 10, wantedY, phoneX + PHONE_WIDTH - 10, wantedY + 45, 0xFF1C1C28);
-
-        guiGraphics.drawCenteredString(this.font, "Статус розыска:", centerX, wantedY + 8, 0xAAAAAA);
-        if (wanted > 0) {
-            guiGraphics.drawCenteredString(this.font, "Уровень " + wanted + " ★", centerX, wantedY + 24, 0xFF5555);
-        } else {
-            guiGraphics.drawCenteredString(this.font, "Чист ✓", centerX, wantedY + 24, 0x55FF55);
-        }
     }
 
     @Override

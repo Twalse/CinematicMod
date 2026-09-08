@@ -1,5 +1,7 @@
 package com.twalse.twmod.networking;
 
+import com.twalse.twmod.networking.message.ExecuteContactActionPacket;
+import com.twalse.twmod.networking.message.BuyItemPacket;
 import com.twalse.twmod.networking.message.LockpickResultPacket;
 import com.twalse.twmod.networking.message.OpenAdminScreenPacket;
 import com.twalse.twmod.networking.message.OpenLockpickPacket;
@@ -63,6 +65,18 @@ public class PacketHandler {
                 .decoder(OpenPhonePacket::decode)
                 .consumerMainThread(OpenPhonePacket::handle)
                 .add();
+
+        INSTANCE.messageBuilder(ExecuteContactActionPacket.class, packetId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(ExecuteContactActionPacket::encode)
+                .decoder(ExecuteContactActionPacket::decode)
+                .consumerMainThread(ExecuteContactActionPacket::handle)
+                .add();
+
+        INSTANCE.messageBuilder(BuyItemPacket.class, packetId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(BuyItemPacket::encode)
+                .decoder(BuyItemPacket::decode)
+                .consumerMainThread(BuyItemPacket::handle)
+                .add();
     }
 
     public static void sendToPlayer(Object msg, ServerPlayer player) {
@@ -82,7 +96,8 @@ public class PacketHandler {
             sendToPlayer(new SyncQuestDataPacket(
                     data.getVariables(),
                     new ArrayList<>(data.getQuests().values()),
-                    new ArrayList<>(data.getWaypoints().values())
+                    new ArrayList<>(data.getWaypoints().values()),
+                    data.getInstalledApps()
             ), player);
         });
     }

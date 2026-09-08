@@ -9,20 +9,24 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 public class SyncQuestDataPacket {
     public final Map<String, Integer> variables;
     public final List<QuestData> quests;
     public final List<WaypointData> waypoints;
+    public final Set<String> installedApps;
 
-    public SyncQuestDataPacket(Map<String, Integer> variables, List<QuestData> quests, List<WaypointData> waypoints) {
+    public SyncQuestDataPacket(Map<String, Integer> variables, List<QuestData> quests, List<WaypointData> waypoints, Set<String> installedApps) {
         this.variables = variables != null ? variables : new LinkedHashMap<>();
         this.quests = quests != null ? quests : new ArrayList<>();
         this.waypoints = waypoints != null ? waypoints : new ArrayList<>();
+        this.installedApps = installedApps != null ? installedApps : new HashSet<>();
     }
 
     public static void encode(SyncQuestDataPacket msg, FriendlyByteBuf buf) {
@@ -48,6 +52,11 @@ public class SyncQuestDataPacket {
             buf.writeDouble(waypoint.getZ());
             buf.writeInt(waypoint.getColor());
             buf.writeUtf(waypoint.getName());
+        }
+
+        buf.writeInt(msg.installedApps.size());
+        for (String app : msg.installedApps) {
+            buf.writeUtf(app);
         }
     }
 
@@ -82,14 +91,20 @@ public class SyncQuestDataPacket {
             wList.add(new WaypointData(id, x, y, z, color, name));
         }
 
-        return new SyncQuestDataPacket(vars, qList, wList);
+        int appsSize = buf.readInt();
+        Set<String> apps = new HashSet<>();
+        for (int i = 0; i < appsSize; i++) {
+            apps.add(buf.readUtf());
+        }
+
+        return new SyncQuestDataPacket(vars, qList, wList, apps);
     }
 
     public static void handle(SyncQuestDataPacket msg, Supplier<NetworkEvent.Context> ctxSupplier) {
         NetworkEvent.Context ctx = ctxSupplier.get();
         ctx.enqueueWork(() -> {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                ClientQuestData.set(msg.variables, msg.quests, msg.waypoints);
+                ClientQuestData.set(msg.variables, msg.quests, msg.waypoints, msg.installedApps);
             });
         });
         ctx.setPacketHandled(true);
