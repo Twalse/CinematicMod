@@ -1,19 +1,23 @@
 package com.twalse.twmod.client.gui;
 
+import com.twalse.twmod.TwMod;
 import com.twalse.twmod.quest.ClientQuestData;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PhoneScreen extends Screen {
 
+    public static final ResourceLocation PHONE_BG = new ResourceLocation(TwMod.MODID, "textures/gui/phone_bg.png");
+
     private static final int PHONE_WIDTH = 150;
     private static final int PHONE_HEIGHT = 260;
 
-    public record AppEntry(String id, String name, String iconSymbol, int color, java.util.function.Consumer<PhoneScreen> action) {}
+    public record AppEntry(String id, String name, ResourceLocation icon, java.util.function.Consumer<PhoneScreen> action) {}
 
     private final List<AppEntry> availableApps = new ArrayList<>();
 
@@ -21,14 +25,14 @@ public class PhoneScreen extends Screen {
         super(Component.literal("Smartphone"));
 
         // Register available apps in TwOS
-        availableApps.add(new AppEntry("contacts", "Контакты", "📞", 0xFF28A745, p -> p.minecraft.setScreen(new ContactsAppScreen(p))));
-        availableApps.add(new AppEntry("market", "Маркет", "💳", 0xFF6F42C1, p -> p.minecraft.setScreen(new MarketAppScreen(p))));
-        availableApps.add(new AppEntry("twstore", "TwStore", "🛍️", 0xFF007BFF, p -> p.minecraft.setScreen(new TwStoreScreen(p))));
+        availableApps.add(new AppEntry("contacts", "Контакты", new ResourceLocation(TwMod.MODID, "textures/gui/app_contacts.png"), p -> p.minecraft.setScreen(new ContactsAppScreen(p))));
+        availableApps.add(new AppEntry("market", "Маркет", new ResourceLocation(TwMod.MODID, "textures/gui/app_market.png"), p -> p.minecraft.setScreen(new MarketAppScreen(p))));
+        availableApps.add(new AppEntry("twstore", "TwStore", new ResourceLocation(TwMod.MODID, "textures/gui/app_twstore.png"), p -> p.minecraft.setScreen(new TwStoreScreen(p))));
 
-        availableApps.add(new AppEntry("dino", "Dino", "🦖", 0xFFDC3545, p -> p.minecraft.setScreen(new DinoGameScreen(p))));
-        availableApps.add(new AppEntry("twgramm", "TwGramm", "✈️", 0xFF17A2B8, p -> p.minecraft.setScreen(new TwGrammScreen(p))));
-        availableApps.add(new AppEntry("camera", "Камера", "📷", 0xFFFFC107, p -> p.minecraft.setScreen(new CameraAppScreen(p))));
-        availableApps.add(new AppEntry("gallery", "Галерея", "🖼️", 0xFFFD7E14, p -> p.minecraft.setScreen(new GalleryAppScreen(p))));
+        availableApps.add(new AppEntry("dino", "Dino", new ResourceLocation(TwMod.MODID, "textures/gui/app_dino.png"), p -> p.minecraft.setScreen(new DinoGameScreen(p))));
+        availableApps.add(new AppEntry("twgramm", "TwGramm", new ResourceLocation(TwMod.MODID, "textures/gui/app_twgramm.png"), p -> p.minecraft.setScreen(new TwGrammScreen(p))));
+        availableApps.add(new AppEntry("camera", "Камера", new ResourceLocation(TwMod.MODID, "textures/gui/app_camera.png"), p -> p.minecraft.setScreen(new CameraAppScreen(p))));
+        availableApps.add(new AppEntry("gallery", "Галерея", new ResourceLocation(TwMod.MODID, "textures/gui/app_gallery.png"), p -> p.minecraft.setScreen(new GalleryAppScreen(p))));
     }
 
     @Override
@@ -50,9 +54,9 @@ public class PhoneScreen extends Screen {
         List<AppEntry> installed = getInstalledAppEntries();
         int gridStartX = phoneX + 16;
         int gridStartY = phoneY + 35;
-        int iconSize = 30;
+        int iconSize = 32;
         int gapX = 14;
-        int gapY = 18;
+        int gapY = 20;
 
         for (int i = 0; i < installed.size(); i++) {
             int col = i % 3;
@@ -90,35 +94,27 @@ public class PhoneScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // 1. Phone Outer Bezel Frame with Rounded Corner Effect
-        guiGraphics.fill(phoneX - 8, phoneY - 12, phoneX + PHONE_WIDTH + 8, phoneY + PHONE_HEIGHT + 12, 0xFF111113);
-        guiGraphics.fill(phoneX - 6, phoneY - 10, phoneX + PHONE_WIDTH + 6, phoneY + PHONE_HEIGHT + 10, 0xFF222225);
-        guiGraphics.fill(phoneX - 4, phoneY - 8, phoneX + PHONE_WIDTH + 4, phoneY + PHONE_HEIGHT + 8, 0xFF18181A);
+        // 1. Render Phone Frame & Wallpaper Texture Background
+        try {
+            guiGraphics.blit(PHONE_BG, phoneX - 5, phoneY - 5, 0, 0, PHONE_WIDTH + 10, PHONE_HEIGHT + 10, PHONE_WIDTH + 10, PHONE_HEIGHT + 10);
+        } catch (Exception e) {
+            guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0B1021);
+        }
 
-        // Rounded Bezel Corners (Clip Outer Edges)
-        guiGraphics.fill(phoneX - 8, phoneY - 12, phoneX - 5, phoneY - 9, 0x00000000);
-        guiGraphics.fill(phoneX + PHONE_WIDTH + 5, phoneY - 12, phoneX + PHONE_WIDTH + 8, phoneY - 9, 0x00000000);
-        guiGraphics.fill(phoneX - 8, phoneY + PHONE_HEIGHT + 9, phoneX - 5, phoneY + PHONE_HEIGHT + 12, 0x00000000);
-        guiGraphics.fill(phoneX + PHONE_WIDTH + 5, phoneY + PHONE_HEIGHT + 9, phoneX + PHONE_WIDTH + 8, phoneY + PHONE_HEIGHT + 12, 0x00000000);
+        // 2. Camera Notch
+        guiGraphics.fill(centerX - 18, phoneY - 3, centerX + 18, phoneY - 1, 0xFF000000);
 
-        // 2. Phone Screen Display (Dark Blue Gradient Wallpaper)
-        guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0B1021);
-        guiGraphics.fill(phoneX, phoneY + 110, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF162238);
-
-        // 3. Notch & Camera
-        guiGraphics.fill(centerX - 18, phoneY - 5, centerX + 18, phoneY - 2, 0xFF000000);
-
-        // 4. Status Bar
+        // 3. Status Bar
         guiGraphics.drawString(this.font, "12:00", phoneX + 8, phoneY + 6, 0xDDDDDD, false);
         guiGraphics.drawString(this.font, "5G ⚡", phoneX + PHONE_WIDTH - 30, phoneY + 6, 0xDDDDDD, false);
 
-        // 5. Desktop App Icons Grid
+        // 4. Desktop App Icons Grid (Transparent PNG icons without color boxes)
         List<AppEntry> installed = getInstalledAppEntries();
         int gridStartX = phoneX + 16;
         int gridStartY = phoneY + 35;
-        int iconSize = 30;
+        int iconSize = 32;
         int gapX = 14;
-        int gapY = 18;
+        int gapY = 20;
 
         for (int i = 0; i < installed.size(); i++) {
             AppEntry app = installed.get(i);
@@ -129,13 +125,17 @@ public class PhoneScreen extends Screen {
             int iy = gridStartY + row * (iconSize + gapY);
 
             boolean hovered = mouseX >= ix && mouseX <= ix + iconSize && mouseY >= iy && mouseY <= iy + iconSize;
-            int bgColor = hovered ? 0xFFFFFFFF : app.color();
 
-            // App Icon Box
-            guiGraphics.fill(ix, iy, ix + iconSize, iy + iconSize, bgColor);
-            guiGraphics.drawCenteredString(this.font, app.iconSymbol(), ix + iconSize / 2, iy + 9, 0xFFFFFF);
+            // Render App Icon Texture directly
+            try {
+                if (hovered) {
+                    guiGraphics.fill(ix - 2, iy - 2, ix + iconSize + 2, iy + iconSize + 2, 0x40FFFFFF);
+                }
+                guiGraphics.blit(app.icon(), ix, iy, 0, 0, iconSize, iconSize, iconSize, iconSize);
+            } catch (Exception ignored) {
+            }
 
-            // Scaled App Label (0.75f) to fit neatly without overlapping
+            // Scaled App Label (0.75f) with shadow, centered under icon
             guiGraphics.pose().pushPose();
             float labelScale = 0.75f;
             float iconCenterX = ix + iconSize / 2.0f;
@@ -144,17 +144,13 @@ public class PhoneScreen extends Screen {
             guiGraphics.pose().translate(iconCenterX, labelY, 0);
             guiGraphics.pose().scale(labelScale, labelScale, 1.0f);
 
-            guiGraphics.drawCenteredString(this.font, app.name(), 0, 0, 0xFFEEEEEE);
+            guiGraphics.drawCenteredString(this.font, app.name(), 0, 0, 0xFFFFFFFF);
             guiGraphics.pose().popPose();
         }
 
-        // 6. Bottom Dock Bar
-        int dockY = phoneY + PHONE_HEIGHT - 38;
-        guiGraphics.fill(phoneX + 8, dockY, phoneX + PHONE_WIDTH - 8, dockY + 1, 0x44FFFFFF);
-
-        // 7. Bottom Home Button
+        // 5. Bottom Home Button
         int homeBtnX = centerX - 15;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 20;
+        int homeBtnY = phoneY + PHONE_HEIGHT - 18;
         boolean homeHovered = mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12;
         int homeColor = homeHovered ? 0xFFD4AF37 : 0xFF555555;
 
