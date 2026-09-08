@@ -3,6 +3,7 @@ package com.twalse.twmod.commands;
 import com.twalse.twmod.networking.PacketHandler;
 import com.twalse.twmod.networking.message.OpenAdminScreenPacket;
 import com.twalse.twmod.networking.message.OpenLockpickPacket;
+import com.twalse.twmod.networking.message.OpenPhonePacket;
 import com.twalse.twmod.quest.PlayerQuestProvider;
 import com.twalse.twmod.quest.WaypointData;
 import com.mojang.brigadier.CommandDispatcher;
@@ -26,6 +27,18 @@ public class TwCommand {
             // Admin GUI Command
             .then(Commands.literal("admin")
                 .executes(ctx -> openAdminGui(ctx.getSource()))
+            )
+
+            // Phone Command
+            .then(Commands.literal("phone")
+                .then(Commands.literal("open")
+                    .then(Commands.argument("targets", EntityArgument.players())
+                        .executes(ctx -> openPhone(
+                            ctx.getSource(),
+                            EntityArgument.getPlayers(ctx, "targets")
+                        ))
+                    )
+                )
             )
 
             // Minigames
@@ -195,6 +208,15 @@ public class TwCommand {
             source.sendFailure(Component.literal("This command can only be executed by a player."));
             return 0;
         }
+    }
+
+    private static int openPhone(CommandSourceStack source, Collection<ServerPlayer> targets) {
+        OpenPhonePacket packet = new OpenPhonePacket();
+        for (ServerPlayer player : targets) {
+            PacketHandler.sendToPlayer(packet, player);
+        }
+        source.sendSuccess(() -> Component.literal("Opened Smartphone for " + targets.size() + " player(s)."), true);
+        return targets.size();
     }
 
     private static int startLockpickMinigame(CommandSourceStack source, Collection<ServerPlayer> targets, int pinsCount, int pickHealth) {

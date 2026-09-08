@@ -2,6 +2,7 @@ package com.twalse.twmod.client;
 
 import com.twalse.twmod.TwMod;
 import com.twalse.twmod.client.gui.ConfigScreen;
+import com.twalse.twmod.client.gui.PhoneScreen;
 import com.twalse.twmod.client.gui.QuestScoreboardOverlay;
 import com.twalse.twmod.client.render.VideoScreen;
 import com.twalse.twmod.networking.message.SendVideoPlayer;
@@ -35,6 +36,12 @@ public class ClientHandler {
     public static void openVideo(Video video, int volume) {
         Minecraft.getInstance().execute(() -> {
             Minecraft.getInstance().setScreen(new VideoScreen(video, volume));
+        });
+    }
+
+    public static void openPhoneScreen() {
+        Minecraft.getInstance().execute(() -> {
+            Minecraft.getInstance().setScreen(new PhoneScreen());
         });
     }
 

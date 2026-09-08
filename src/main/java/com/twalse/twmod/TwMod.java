@@ -4,6 +4,7 @@ import com.twalse.twmod.commands.StartVideoCommand;
 import com.twalse.twmod.commands.TwCommand;
 import com.twalse.twmod.config.CinematicConfig;
 import com.twalse.twmod.config.HudClientConfig;
+import com.twalse.twmod.item.ModItems;
 import com.twalse.twmod.networking.PacketHandler;
 import com.twalse.twmod.util.FileManager;
 import org.apache.logging.log4j.LogManager;
@@ -33,6 +34,7 @@ public class TwMod {
         instance = this;
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
+        ModItems.register(modEventBus);
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, CinematicConfig.CLIENT_SPEC);
 
         modEventBus.addListener(this::commonSetup);
