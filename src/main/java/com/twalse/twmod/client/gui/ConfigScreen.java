@@ -9,6 +9,7 @@ import dev.isxander.yacl3.api.YetAnotherConfigLib;
 import dev.isxander.yacl3.api.controller.ColorControllerBuilder;
 import dev.isxander.yacl3.api.controller.FloatSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
+
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -70,11 +71,35 @@ public class ConfigScreen {
         // Option 5: Text Color
         Option<Color> textColorOption = Option.<Color>createBuilder()
                 .name(Component.literal("Text Color"))
-                .description(OptionDescription.of(Component.literal("Color picker for the HUD text")))
+                .description(OptionDescription.of(Component.literal("Color picker for standard HUD text")))
                 .binding(Binding.generic(
                         Color.WHITE,
                         () -> new Color(config.textColor),
                         color -> config.textColor = color.getRGB() & 0xFFFFFF
+                ))
+                .controller(ColorControllerBuilder::create)
+                .build();
+
+        // Option 6: Header Color
+        Option<Color> headerColorOption = Option.<Color>createBuilder()
+                .name(Component.literal("Header Color"))
+                .description(OptionDescription.of(Component.literal("Color picker for section headers (TASKS/STATS)")))
+                .binding(Binding.generic(
+                        new Color(0xD4AF37),
+                        () -> new Color(config.headerColor),
+                        color -> config.headerColor = color.getRGB() & 0xFFFFFF
+                ))
+                .controller(ColorControllerBuilder::create)
+                .build();
+
+        // Option 7: Border Color
+        Option<Color> borderColorOption = Option.<Color>createBuilder()
+                .name(Component.literal("Border Color"))
+                .description(OptionDescription.of(Component.literal("Color picker for the HUD box border")))
+                .binding(Binding.generic(
+                        new Color(0xD4AF37),
+                        () -> new Color(config.borderColor),
+                        color -> config.borderColor = color.getRGB() & 0xFFFFFF
                 ))
                 .controller(ColorControllerBuilder::create)
                 .build();
@@ -86,6 +111,8 @@ public class ConfigScreen {
                 .option(scaleOption)
                 .option(opacityOption)
                 .option(textColorOption)
+                .option(headerColorOption)
+                .option(borderColorOption)
                 .build();
 
         YetAnotherConfigLib yacl = YetAnotherConfigLib.createBuilder()

@@ -1,5 +1,6 @@
 package com.twalse.twmod.networking;
 
+import com.twalse.twmod.networking.message.OpenAdminScreenPacket;
 import com.twalse.twmod.networking.message.SendVideoPlayer;
 import com.twalse.twmod.networking.message.SyncQuestDataPacket;
 import com.twalse.twmod.quest.PlayerQuestProvider;
@@ -34,6 +35,12 @@ public class PacketHandler {
                 .encoder(SyncQuestDataPacket::encode)
                 .decoder(SyncQuestDataPacket::decode)
                 .consumerMainThread(SyncQuestDataPacket::handle)
+                .add();
+
+        INSTANCE.messageBuilder(OpenAdminScreenPacket.class, packetId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(OpenAdminScreenPacket::encode)
+                .decoder(OpenAdminScreenPacket::decode)
+                .consumerMainThread(OpenAdminScreenPacket::handle)
                 .add();
     }
 

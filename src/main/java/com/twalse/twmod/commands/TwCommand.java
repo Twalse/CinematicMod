@@ -1,6 +1,7 @@
 package com.twalse.twmod.commands;
 
 import com.twalse.twmod.networking.PacketHandler;
+import com.twalse.twmod.networking.message.OpenAdminScreenPacket;
 import com.twalse.twmod.quest.PlayerQuestProvider;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -18,6 +19,11 @@ public class TwCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("tw")
             .requires(source -> source.hasPermission(2))
+
+            // Admin GUI Command
+            .then(Commands.literal("admin")
+                .executes(ctx -> openAdminGui(ctx.getSource()))
+            )
 
             // Dynamic Variables commands
             .then(Commands.literal("var")
@@ -104,6 +110,18 @@ public class TwCommand {
                 )
             )
         );
+    }
+
+    private static int openAdminGui(CommandSourceStack source) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            PacketHandler.sendToPlayer(new OpenAdminScreenPacket(), player);
+            source.sendSuccess(() -> Component.literal("Opened TwMod Quest Admin Screen."), false);
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("This command can only be executed by a player."));
+            return 0;
+        }
     }
 
     private static int addVariable(CommandSourceStack source, Collection<ServerPlayer> targets, String varId, int value) {

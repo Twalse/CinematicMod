@@ -2,12 +2,14 @@ package com.twalse.twmod.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.twalse.twmod.TwMod;
+import com.twalse.twmod.util.TwLogger;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HudClientConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -17,9 +19,22 @@ public class HudClientConfig {
     public int hudY = 10;
     public float hudScale = 1.0f;
     public int textColor = 0xFFFFFF;
+    public int headerColor = 0xD4AF37;
+    public int borderColor = 0xD4AF37;
     public float bgOpacity = 0.5f;
 
+    public String customFont = "minecraft:default";
+
+    // Custom variable icon mappings: varId -> texture location
+    public Map<String, String> iconMappings = new HashMap<>();
+
     private static HudClientConfig instance = new HudClientConfig();
+
+    public HudClientConfig() {
+        iconMappings.put("money", "twmod:textures/gui/coin.png");
+        iconMappings.put("coins", "twmod:textures/gui/coin.png");
+        iconMappings.put("scrap", "twmod:textures/gui/icon.png");
+    }
 
     public static HudClientConfig get() {
         if (instance == null) {
@@ -36,7 +51,7 @@ public class HudClientConfig {
                     instance = loaded;
                 }
             } catch (Exception e) {
-                TwMod.LOGGER.error("Failed to load twmod-client.json config", e);
+                TwLogger.error("Failed to load twmod-client.json config", e);
             }
         } else {
             save();
@@ -53,7 +68,7 @@ public class HudClientConfig {
                 GSON.toJson(get(), writer);
             }
         } catch (Exception e) {
-            TwMod.LOGGER.error("Failed to save twmod-client.json config", e);
+            TwLogger.error("Failed to save twmod-client.json config", e);
         }
     }
 }
