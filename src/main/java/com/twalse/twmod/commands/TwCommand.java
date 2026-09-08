@@ -2,6 +2,7 @@ package com.twalse.twmod.commands;
 
 import com.twalse.twmod.networking.PacketHandler;
 import com.twalse.twmod.networking.message.OpenAdminScreenPacket;
+import com.twalse.twmod.networking.message.OpenLockpickPacket;
 import com.twalse.twmod.quest.PlayerQuestProvider;
 import com.twalse.twmod.quest.WaypointData;
 import com.mojang.brigadier.CommandDispatcher;
@@ -25,6 +26,24 @@ public class TwCommand {
             // Admin GUI Command
             .then(Commands.literal("admin")
                 .executes(ctx -> openAdminGui(ctx.getSource()))
+            )
+
+            // Minigames
+            .then(Commands.literal("minigame")
+                .then(Commands.literal("lockpick")
+                    .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("pinsCount", IntegerArgumentType.integer(1, 10))
+                            .then(Commands.argument("pickHealth", IntegerArgumentType.integer(1, 20))
+                                .executes(ctx -> startLockpickMinigame(
+                                    ctx.getSource(),
+                                    EntityArgument.getPlayers(ctx, "targets"),
+                                    IntegerArgumentType.getInteger(ctx, "pinsCount"),
+                                    IntegerArgumentType.getInteger(ctx, "pickHealth")
+                                ))
+                            )
+                        )
+                    )
+                )
             )
 
             // Dynamic Variables commands
@@ -176,6 +195,15 @@ public class TwCommand {
             source.sendFailure(Component.literal("This command can only be executed by a player."));
             return 0;
         }
+    }
+
+    private static int startLockpickMinigame(CommandSourceStack source, Collection<ServerPlayer> targets, int pinsCount, int pickHealth) {
+        OpenLockpickPacket packet = new OpenLockpickPacket(pinsCount, pickHealth);
+        for (ServerPlayer player : targets) {
+            PacketHandler.sendToPlayer(packet, player);
+        }
+        source.sendSuccess(() -> Component.literal("Started lockpick minigame (" + pinsCount + " pins, " + pickHealth + " health) for " + targets.size() + " player(s)."), true);
+        return targets.size();
     }
 
     private static int addVariable(CommandSourceStack source, Collection<ServerPlayer> targets, String varId, int value) {

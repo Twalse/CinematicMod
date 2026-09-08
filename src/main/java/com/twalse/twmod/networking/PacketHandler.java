@@ -1,6 +1,8 @@
 package com.twalse.twmod.networking;
 
+import com.twalse.twmod.networking.message.LockpickResultPacket;
 import com.twalse.twmod.networking.message.OpenAdminScreenPacket;
+import com.twalse.twmod.networking.message.OpenLockpickPacket;
 import com.twalse.twmod.networking.message.SendVideoPlayer;
 import com.twalse.twmod.networking.message.SyncQuestDataPacket;
 import com.twalse.twmod.quest.PlayerQuestProvider;
@@ -42,10 +44,26 @@ public class PacketHandler {
                 .decoder(OpenAdminScreenPacket::decode)
                 .consumerMainThread(OpenAdminScreenPacket::handle)
                 .add();
+
+        INSTANCE.messageBuilder(OpenLockpickPacket.class, packetId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(OpenLockpickPacket::encode)
+                .decoder(OpenLockpickPacket::decode)
+                .consumerMainThread(OpenLockpickPacket::handle)
+                .add();
+
+        INSTANCE.messageBuilder(LockpickResultPacket.class, packetId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(LockpickResultPacket::encode)
+                .decoder(LockpickResultPacket::decode)
+                .consumerMainThread(LockpickResultPacket::handle)
+                .add();
     }
 
     public static void sendToPlayer(Object msg, ServerPlayer player) {
         INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), msg);
+    }
+
+    public static void sendToServer(Object msg) {
+        INSTANCE.sendToServer(msg);
     }
 
     public static void sendToAll(Object msg) {
