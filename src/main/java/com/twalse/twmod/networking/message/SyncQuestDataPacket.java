@@ -21,12 +21,14 @@ public class SyncQuestDataPacket {
     public final List<QuestData> quests;
     public final List<WaypointData> waypoints;
     public final Set<String> installedApps;
+    public final Map<String, List<String>> twGrammMessages;
 
-    public SyncQuestDataPacket(Map<String, Integer> variables, List<QuestData> quests, List<WaypointData> waypoints, Set<String> installedApps) {
+    public SyncQuestDataPacket(Map<String, Integer> variables, List<QuestData> quests, List<WaypointData> waypoints, Set<String> installedApps, Map<String, List<String>> twGrammMessages) {
         this.variables = variables != null ? variables : new LinkedHashMap<>();
         this.quests = quests != null ? quests : new ArrayList<>();
         this.waypoints = waypoints != null ? waypoints : new ArrayList<>();
         this.installedApps = installedApps != null ? installedApps : new HashSet<>();
+        this.twGrammMessages = twGrammMessages != null ? twGrammMessages : new LinkedHashMap<>();
     }
 
     public static void encode(SyncQuestDataPacket msg, FriendlyByteBuf buf) {
@@ -57,6 +59,15 @@ public class SyncQuestDataPacket {
         buf.writeInt(msg.installedApps.size());
         for (String app : msg.installedApps) {
             buf.writeUtf(app);
+        }
+
+        buf.writeInt(msg.twGrammMessages.size());
+        for (Map.Entry<String, List<String>> entry : msg.twGrammMessages.entrySet()) {
+            buf.writeUtf(entry.getKey());
+            buf.writeInt(entry.getValue().size());
+            for (String str : entry.getValue()) {
+                buf.writeUtf(str);
+            }
         }
     }
 
@@ -97,14 +108,26 @@ public class SyncQuestDataPacket {
             apps.add(buf.readUtf());
         }
 
-        return new SyncQuestDataPacket(vars, qList, wList, apps);
+        int msgMapSize = buf.readInt();
+        Map<String, List<String>> msgs = new LinkedHashMap<>();
+        for (int i = 0; i < msgMapSize; i++) {
+            String contactId = buf.readUtf();
+            int listSize = buf.readInt();
+            List<String> list = new ArrayList<>();
+            for (int j = 0; j < listSize; j++) {
+                list.add(buf.readUtf());
+            }
+            msgs.put(contactId, list);
+        }
+
+        return new SyncQuestDataPacket(vars, qList, wList, apps, msgs);
     }
 
     public static void handle(SyncQuestDataPacket msg, Supplier<NetworkEvent.Context> ctxSupplier) {
         NetworkEvent.Context ctx = ctxSupplier.get();
         ctx.enqueueWork(() -> {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                ClientQuestData.set(msg.variables, msg.quests, msg.waypoints, msg.installedApps);
+                ClientQuestData.set(msg.variables, msg.quests, msg.waypoints, msg.installedApps, msg.twGrammMessages);
             });
         });
         ctx.setPacketHandled(true);

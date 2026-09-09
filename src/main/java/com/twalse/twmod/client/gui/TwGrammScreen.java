@@ -1,5 +1,6 @@
 package com.twalse.twmod.client.gui;
 
+import com.twalse.twmod.quest.ClientQuestData;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -17,23 +18,12 @@ public class TwGrammScreen extends Screen {
 
     private String selectedChat = "boss";
 
-    // Chat mock messages store
-    private final Map<String, List<String>> chatMessages = new HashMap<>();
+    // Chat local response messages store
+    private final Map<String, List<String>> localResponses = new HashMap<>();
 
     public TwGrammScreen(Screen parent) {
         super(Component.literal("TwGramm"));
         this.parent = parent;
-
-        // Initialize mock chat history
-        List<String> bossMsgs = new ArrayList<>();
-        bossMsgs.add("Босс: Мне нужны фотографии товара.");
-        bossMsgs.add("Босс: Жду координаты места.");
-        chatMessages.put("boss", bossMsgs);
-
-        List<String> dealerMsgs = new ArrayList<>();
-        dealerMsgs.add("Барыга: Есть отличная партия отмычек.");
-        dealerMsgs.add("Барыга: Загляни в маркет.");
-        chatMessages.put("dealer", dealerMsgs);
     }
 
     @Override
@@ -49,11 +39,35 @@ public class TwGrammScreen extends Screen {
 
         // Send Data response button
         this.addRenderableWidget(Button.builder(Component.literal("📩 Отправить данные"), btn -> {
-            List<String> msgs = chatMessages.get(selectedChat);
-            if (msgs != null) {
-                msgs.add("Вы: Данные отправлены.");
-            }
+            localResponses.computeIfAbsent(selectedChat, k -> new ArrayList<>()).add("Вы: Данные отправлены.");
         }).bounds(phoneX + 45, sendY, 98, 20).build());
+    }
+
+    private List<String> getCombinedMessages(String contactId) {
+        List<String> result = new ArrayList<>();
+
+        // Default initial story messages
+        if ("boss".equalsIgnoreCase(contactId)) {
+            result.add("Босс: Мне нужны фотографии товара.");
+            result.add("Босс: Жду координаты места.");
+        } else if ("dealer".equalsIgnoreCase(contactId)) {
+            result.add("Барыга: Есть отличная партия отмычек.");
+            result.add("Барыга: Загляни в маркет.");
+        }
+
+        // Add dynamically received server messages from capability
+        List<String> dynamicMsgs = ClientQuestData.getMessagesForContact(contactId);
+        if (dynamicMsgs != null) {
+            result.addAll(dynamicMsgs);
+        }
+
+        // Add local responses sent during session
+        List<String> userSent = localResponses.get(contactId);
+        if (userSent != null) {
+            result.addAll(userSent);
+        }
+
+        return result;
     }
 
     @Override
@@ -139,14 +153,13 @@ public class TwGrammScreen extends Screen {
         guiGraphics.fill(chatX + 2, chatY + 14, chatX + chatW - 2, chatY + 15, 0xFF333344);
 
         // Message History List
-        List<String> messages = chatMessages.getOrDefault(selectedChat, new ArrayList<>());
+        List<String> messages = getCombinedMessages(selectedChat);
         int msgY = chatY + 20;
 
         for (String msg : messages) {
             if (msgY > chatY + chatH - 12) break;
 
             boolean isPlayer = msg.startsWith("Вы:");
-            int msgBgColor = isPlayer ? 0xFF1B3B2B : 0xFF252535;
             int msgTextColor = isPlayer ? 0xFF55FF55 : 0xFFDDDDDD;
 
             // Render message text scaled down (0.75f) to fit phone column width

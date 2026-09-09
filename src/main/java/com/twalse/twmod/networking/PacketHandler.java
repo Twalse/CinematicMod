@@ -97,7 +97,8 @@ public class PacketHandler {
                     data.getVariables(),
                     new ArrayList<>(data.getQuests().values()),
                     new ArrayList<>(data.getWaypoints().values()),
-                    data.getInstalledApps()
+                    data.getInstalledApps(),
+                    data.getTwGrammMessages()
             ), player);
         });
     }

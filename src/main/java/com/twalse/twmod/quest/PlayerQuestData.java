@@ -2,13 +2,14 @@ package com.twalse.twmod.quest;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,6 +18,7 @@ public class PlayerQuestData {
     private final Map<String, QuestData> quests = new LinkedHashMap<>();
     private final Map<String, WaypointData> waypoints = new LinkedHashMap<>();
     private final Set<String> installedApps = new HashSet<>();
+    private final Map<String, List<String>> twGrammMessages = new LinkedHashMap<>();
 
     public PlayerQuestData() {
         // Default installed apps
@@ -123,6 +125,20 @@ public class PlayerQuestData {
         }
     }
 
+    public Map<String, List<String>> getTwGrammMessages() {
+        return Collections.unmodifiableMap(twGrammMessages);
+    }
+
+    public List<String> getMessagesForContact(String contactId) {
+        return twGrammMessages.getOrDefault(contactId.toLowerCase(), Collections.emptyList());
+    }
+
+    public void addTwGrammMessage(String contactId, String message) {
+        if (contactId != null && !contactId.isEmpty() && message != null) {
+            twGrammMessages.computeIfAbsent(contactId.toLowerCase(), k -> new ArrayList<>()).add(message);
+        }
+    }
+
     public void copyFrom(PlayerQuestData source) {
         this.variables.clear();
         this.variables.putAll(source.variables);
@@ -141,6 +157,11 @@ public class PlayerQuestData {
 
         this.installedApps.clear();
         this.installedApps.addAll(source.installedApps);
+
+        this.twGrammMessages.clear();
+        for (Map.Entry<String, List<String>> entry : source.twGrammMessages.entrySet()) {
+            this.twGrammMessages.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
     }
 
     public void saveNBTData(CompoundTag tag) {
@@ -167,6 +188,16 @@ public class PlayerQuestData {
             appList.add(StringTag.valueOf(app));
         }
         tag.put("InstalledApps", appList);
+
+        CompoundTag msgCompound = new CompoundTag();
+        for (Map.Entry<String, List<String>> entry : twGrammMessages.entrySet()) {
+            ListTag listTag = new ListTag();
+            for (String msg : entry.getValue()) {
+                listTag.add(StringTag.valueOf(msg));
+            }
+            msgCompound.put(entry.getKey(), listTag);
+        }
+        tag.put("TwGrammMessages", msgCompound);
     }
 
     public void loadNBTData(CompoundTag tag) {
@@ -208,6 +239,19 @@ public class PlayerQuestData {
             installedApps.add("contacts");
             installedApps.add("market");
             installedApps.add("twstore");
+        }
+
+        twGrammMessages.clear();
+        if (tag.contains("TwGrammMessages", Tag.TAG_COMPOUND)) {
+            CompoundTag msgCompound = tag.getCompound("TwGrammMessages");
+            for (String contactId : msgCompound.getAllKeys()) {
+                ListTag listTag = msgCompound.getList(contactId, Tag.TAG_STRING);
+                List<String> list = new ArrayList<>();
+                for (int i = 0; i < listTag.size(); i++) {
+                    list.add(listTag.getString(i));
+                }
+                twGrammMessages.put(contactId.toLowerCase(), list);
+            }
         }
     }
 }

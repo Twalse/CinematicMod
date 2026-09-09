@@ -50,6 +50,22 @@ public class TwCommand {
                         )
                     )
                 )
+                .then(Commands.literal("message")
+                    .then(Commands.literal("add")
+                        .then(Commands.argument("targets", EntityArgument.players())
+                            .then(Commands.argument("contactId", StringArgumentType.string())
+                                .then(Commands.argument("text", StringArgumentType.string())
+                                    .executes(ctx -> addPhoneMessage(
+                                        ctx.getSource(),
+                                        EntityArgument.getPlayers(ctx, "targets"),
+                                        StringArgumentType.getString(ctx, "contactId"),
+                                        StringArgumentType.getString(ctx, "text")
+                                    ))
+                                )
+                            )
+                        )
+                    )
+                )
             )
 
             // Minigames
@@ -238,6 +254,17 @@ public class TwCommand {
             });
         }
         source.sendSuccess(() -> Component.literal("Installed app '" + appId + "' for " + targets.size() + " player(s)."), true);
+        return targets.size();
+    }
+
+    private static int addPhoneMessage(CommandSourceStack source, Collection<ServerPlayer> targets, String contactId, String text) {
+        for (ServerPlayer player : targets) {
+            player.getCapability(PlayerQuestProvider.PLAYER_QUEST).ifPresent(data -> {
+                data.addTwGrammMessage(contactId, text);
+                PacketHandler.syncQuestData(player);
+            });
+        }
+        source.sendSuccess(() -> Component.literal("Added TwGramm message for contact '" + contactId + "' to " + targets.size() + " player(s)."), true);
         return targets.size();
     }
 
