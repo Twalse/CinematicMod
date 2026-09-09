@@ -31,8 +31,8 @@ public class SettingsAppScreen extends Screen {
             return true;
         }
 
-        int itemX = phoneX + 6;
-        int itemW = PHONE_WIDTH - 12;
+        int itemX = phoneX + 8;
+        int itemW = PHONE_WIDTH - 16;
         int startY = phoneY + 42;
         int itemH = 26;
 
@@ -70,8 +70,8 @@ public class SettingsAppScreen extends Screen {
         // Header Title
         guiGraphics.drawCenteredString(this.font, "Настройки", centerX, phoneY + 18, 0xFFFFFFFF);
 
-        int itemX = phoneX + 6;
-        int itemW = PHONE_WIDTH - 12;
+        int itemX = phoneX + 8;
+        int itemW = PHONE_WIDTH - 16;
         int startY = phoneY + 42;
         int itemH = 26;
 
@@ -80,14 +80,15 @@ public class SettingsAppScreen extends Screen {
         guiGraphics.fill(itemX, startY, itemX + itemW, startY + itemH, airHovered ? 0xFF3A3A3C : 0xFF2C2C2E);
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(itemX + 8, startY + 9, 0);
-        guiGraphics.pose().scale(0.85f, 0.85f, 1.0f);
+        guiGraphics.pose().translate(itemX + 6, startY + 9, 0);
+        guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
         guiGraphics.drawString(this.font, "✈️ Режим полета", 0, 0, 0xFFFFFFFF, false);
         guiGraphics.pose().popPose();
 
-        // Green/Gray toggle indicator square
+        // Green/Gray toggle indicator square aligned right dynamically
         int toggleColor = airplaneMode ? 0xFF34C759 : 0xFF8E8E93;
-        guiGraphics.fill(itemX + itemW - 18, startY + 8, itemX + itemW - 8, startY + 18, toggleColor);
+        int toggleX = itemX + itemW - 14;
+        guiGraphics.fill(toggleX, startY + 8, toggleX + 10, startY + 18, toggleColor);
 
         // 2. iOS-style Clear Cache Card
         int cacheY = startY + 32;
@@ -95,15 +96,19 @@ public class SettingsAppScreen extends Screen {
         guiGraphics.fill(itemX, cacheY, itemX + itemW, cacheY + itemH, cacheHovered ? 0xFF3A3A3C : 0xFF2C2C2E);
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(itemX + 8, cacheY + 9, 0);
-        guiGraphics.pose().scale(0.85f, 0.85f, 1.0f);
+        guiGraphics.pose().translate(itemX + 6, cacheY + 9, 0);
+        guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
         guiGraphics.drawString(this.font, "🧹 Очистить кэш", 0, 0, 0xFFFFFFFF, false);
         guiGraphics.pose().popPose();
 
         if (cacheMessage != null) {
+            float msgScale = 0.7f;
+            int msgW = (int) (this.font.width(cacheMessage) * msgScale);
+            int msgX = (itemX + itemW - 4) - msgW;
+
             guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(itemX + itemW - 42, cacheY + 9, 0);
-            guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
+            guiGraphics.pose().translate(msgX, cacheY + 9, 0);
+            guiGraphics.pose().scale(msgScale, msgScale, 1.0f);
             guiGraphics.drawString(this.font, cacheMessage, 0, 0, 0xFF34C759, false);
             guiGraphics.pose().popPose();
         }

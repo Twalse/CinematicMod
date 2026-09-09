@@ -25,14 +25,13 @@ public class TwStoreScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // Bottom Home Indicator click (return to desktop)
+        // Bottom Home Indicator click
         if (mouseY >= phoneY + PHONE_HEIGHT - 18 && mouseY <= phoneY + PHONE_HEIGHT - 2 &&
             mouseX >= phoneX && mouseX <= phoneX + PHONE_WIDTH) {
             this.minecraft.setScreen(this.parent);
             return true;
         }
 
-        // Custom App Store Items
         int listX = phoneX + 8;
         int itemW = PHONE_WIDTH - 16;
         int startY = phoneY + 36;
@@ -40,19 +39,16 @@ public class TwStoreScreen extends Screen {
 
         if (mouseX >= listX && mouseX <= listX + itemW) {
             if (mouseY >= startY && mouseY <= startY + itemH) {
-                // Install Dino
                 if (this.minecraft != null && this.minecraft.player != null) {
                     this.minecraft.player.connection.sendCommand("tw phone install @s dino");
                 }
                 return true;
-            } else if (mouseY >= startY + 30 && mouseY <= startY + 30 + itemH) {
-                // Install TwGramm
+            } else if (mouseY >= startY + 28 && mouseY <= startY + 28 + itemH) {
                 if (this.minecraft != null && this.minecraft.player != null) {
                     this.minecraft.player.connection.sendCommand("tw phone install @s twgramm");
                 }
                 return true;
-            } else if (mouseY >= startY + 60 && mouseY <= startY + 60 + itemH) {
-                // Install Camera Suite
+            } else if (mouseY >= startY + 56 && mouseY <= startY + 56 + itemH) {
                 if (this.minecraft != null && this.minecraft.player != null) {
                     this.minecraft.player.connection.sendCommand("tw phone install @s camera");
                     this.minecraft.player.connection.sendCommand("tw phone install @s gallery");
@@ -76,20 +72,19 @@ public class TwStoreScreen extends Screen {
         // Background: phone_bg_light.png
         guiGraphics.blit(BG_LIGHT, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
 
-        // Header (Dark text for light wallpaper)
+        // Header (Dark typography)
         guiGraphics.drawCenteredString(this.font, "App Store", centerX, phoneY + 18, 0xFF1D1D1F);
 
-        // App Store List Items
         int listX = phoneX + 8;
         int itemW = PHONE_WIDTH - 16;
         int startY = phoneY + 36;
         int itemH = 24;
 
         renderStoreItem(guiGraphics, mouseX, mouseY, listX, startY, itemW, itemH, "Dino Game", ClientQuestData.isAppInstalled("dino"));
-        renderStoreItem(guiGraphics, mouseX, mouseY, listX, startY + 30, itemW, itemH, "TwGramm", ClientQuestData.isAppInstalled("twgramm"));
-        renderStoreItem(guiGraphics, mouseX, mouseY, listX, startY + 60, itemW, itemH, "Camera Suite", ClientQuestData.isAppInstalled("camera"));
+        renderStoreItem(guiGraphics, mouseX, mouseY, listX, startY + 28, itemW, itemH, "TwGramm", ClientQuestData.isAppInstalled("twgramm"));
+        renderStoreItem(guiGraphics, mouseX, mouseY, listX, startY + 56, itemW, itemH, "Camera Suite", ClientQuestData.isAppInstalled("camera"));
 
-        // iPhone 17 Home Indicator Bar (Dark for light wallpaper)
+        // iPhone 17 Home Indicator Bar
         int navBarX = centerX - 16;
         int navBarY = phoneY + PHONE_HEIGHT - 10;
         guiGraphics.fill(navBarX, navBarY, navBarX + 32, navBarY + 3, 0xFF333333);
@@ -103,15 +98,26 @@ public class TwStoreScreen extends Screen {
 
         guiGraphics.fill(x, y, x + w, y + h, bgColor);
 
-        guiGraphics.drawString(this.font, name, x + 6, y + 8, 0xFF1C1C1E, false);
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(x + 6, y + 8, 0);
+        guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
+        guiGraphics.drawString(this.font, name, 0, 0, 0xFF1C1C1E, false);
+        guiGraphics.pose().popPose();
 
         String btnText = installed ? "✓" : "GET";
         int btnTextColor = installed ? 0xFF34C759 : 0xFF007AFF;
+        float btnScale = 0.75f;
+        int btnW = (int) (this.font.width(btnText) * btnScale);
+        int btnX = (x + w - 6) - btnW;
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(x + w - 24, y + 8, 0);
+        guiGraphics.pose().translate(btnX, y + 8, 0);
+        guiGraphics.pose().scale(btnScale, btnScale, 1.0f);
         guiGraphics.drawString(this.font, btnText, 0, 0, btnTextColor, false);
         guiGraphics.pose().popPose();
+
+        // Subtle 1px divider
+        guiGraphics.fill(x + 2, y + h + 1, x + w - 2, y + h + 2, 0xFFE5E5EA);
     }
 
     @Override

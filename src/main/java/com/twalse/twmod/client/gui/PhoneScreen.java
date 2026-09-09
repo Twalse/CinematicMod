@@ -16,6 +16,7 @@ public class PhoneScreen extends Screen {
 
     public static final ResourceLocation BG_BLACK = new ResourceLocation("twmod", "textures/gui/phone_bg_black.png");
     public static final ResourceLocation BG_DARK = new ResourceLocation("twmod", "textures/gui/phone_bg_dark.png");
+    public static final ResourceLocation BG_WALLPAPER = new ResourceLocation("twmod", "textures/gui/phone_bg_wallpaper.png");
 
     public static final int PHONE_WIDTH = 104;
     public static final int PHONE_HEIGHT = 214;
@@ -104,7 +105,7 @@ public class PhoneScreen extends Screen {
             // Check App Icon Clicks in Grid Layout (3 Columns x 4 Rows)
             List<AppEntry> installed = getInstalledAppEntries();
             int gridStartX = phoneX + 10;
-            int gridStartY = phoneY + 26;
+            int gridStartY = phoneY + 28;
             int iconSize = 24;
             int gapX = 5;
             int gapY = 16;
@@ -155,7 +156,7 @@ public class PhoneScreen extends Screen {
 
         if (state == PhoneState.BOOTING) {
             long elapsed = Util.getMillis() - bootStartTime;
-            long bootDuration = 2000L; // 2.0 seconds boot animation
+            long bootDuration = 2000L;
 
             if (elapsed >= bootDuration) {
                 state = PhoneState.ACTIVE;
@@ -163,9 +164,8 @@ public class PhoneScreen extends Screen {
                 // Render phone_bg_dark.png
                 guiGraphics.blit(BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
 
-                // Smooth fade-in and fade-out alpha for "TwOS" text
-                double progress = (double) elapsed / bootDuration; // 0.0 to 1.0
-                float alpha = (float) Math.sin(progress * Math.PI); // Smooth curve 0 -> 1 -> 0
+                double progress = (double) elapsed / bootDuration;
+                float alpha = (float) Math.sin(progress * Math.PI);
                 int alphaInt = Math.min(255, Math.max(0, (int) (alpha * 255)));
                 int textColor = (alphaInt << 24) | 0x00FFFFFF;
 
@@ -180,8 +180,8 @@ public class PhoneScreen extends Screen {
             }
         }
 
-        // State is ACTIVE: Render phone_bg_dark.png background
-        guiGraphics.blit(BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
+        // State is ACTIVE: Render phone_bg_wallpaper.png background
+        guiGraphics.blit(BG_WALLPAPER, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
 
         // Status Bar: Game Time & Signal/Airplane
         Minecraft mc = Minecraft.getInstance();
@@ -229,20 +229,21 @@ public class PhoneScreen extends Screen {
                 if (hovered) {
                     guiGraphics.fill(ix - 1, iy - 1, ix + iconSize + 1, iy + iconSize + 1, 0x40FFFFFF);
                 }
+                // Render pure icon texture without extra black fills
                 guiGraphics.blit(app.icon(), ix, iy, 0.0F, 0.0F, iconSize, iconSize, 32, 32);
             } catch (Exception ignored) {
             }
 
-            // Scaled App Label
-            guiGraphics.pose().pushPose();
+            // Scaled App Label - Centered dynamically under icon using font.width
             float labelScale = 0.55f;
-            float iconCenterX = ix + iconSize / 2.0f;
+            int textW = this.font.width(app.name());
+            float textCenterX = ix + (iconSize - textW * labelScale) / 2.0f;
             float labelY = iy + iconSize + 2;
 
-            guiGraphics.pose().translate(iconCenterX, labelY, 0);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(textCenterX, labelY, 0);
             guiGraphics.pose().scale(labelScale, labelScale, 1.0f);
-
-            guiGraphics.drawCenteredString(this.font, app.name(), 0, 0, 0xFFFFFFFF);
+            guiGraphics.drawString(this.font, app.name(), 0, 0, 0xFFFFFFFF, true);
             guiGraphics.pose().popPose();
         }
 

@@ -88,7 +88,15 @@ public class ContactsAppScreen extends Screen {
         int bgColor = hovered ? 0xFF3A3A3C : 0xFF2C2C2E;
 
         guiGraphics.fill(x, y, x + w, y + h, bgColor);
-        guiGraphics.drawString(this.font, name, x + 8, y + 8, 0xFFFFFFFF, false);
+
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(x + 6, y + 8, 0);
+        guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
+        guiGraphics.drawString(this.font, name, 0, 0, 0xFFFFFFFF, false);
+        guiGraphics.pose().popPose();
+
+        // Subtle 1px divider
+        guiGraphics.fill(x + 2, y + h + 1, x + w - 2, y + h + 2, 0xFF1C1C1E);
     }
 
     @Override

@@ -74,6 +74,8 @@ public class GalleryAppScreen extends Screen {
 
         guiGraphics.drawCenteredString(this.font, "🖼️ Галерея", centerX, phoneY + 18, 0xFFFFFFFF);
 
+        int listX = phoneX + 8;
+        int listW = PHONE_WIDTH - 16;
         int listY = phoneY + 36;
         if (photoList.isEmpty()) {
             guiGraphics.drawCenteredString(this.font, "Нет снимков", centerX, phoneY + 90, 0x888888);
@@ -81,14 +83,22 @@ public class GalleryAppScreen extends Screen {
             for (PhotoMeta photo : photoList) {
                 if (listY > phoneY + PHONE_HEIGHT - 30) break;
 
-                guiGraphics.fill(phoneX + 6, listY, phoneX + PHONE_WIDTH - 6, listY + 28, 0xFF2C2C2E);
-                guiGraphics.drawString(this.font, "📷 " + photo.dateStr(), phoneX + 10, listY + 4, 0xFFFFFF, false);
+                guiGraphics.fill(listX, listY, listX + listW, listY + 28, 0xFF2C2C2E);
 
                 guiGraphics.pose().pushPose();
-                guiGraphics.pose().translate(phoneX + 10, listY + 16, 0);
+                guiGraphics.pose().translate(listX + 6, listY + 4, 0);
                 guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
+                guiGraphics.drawString(this.font, "📷 " + photo.dateStr(), 0, 0, 0xFFFFFFFF, false);
+                guiGraphics.pose().popPose();
+
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate(listX + 6, listY + 16, 0);
+                guiGraphics.pose().scale(0.7f, 0.7f, 1.0f);
                 guiGraphics.drawString(this.font, "XYZ: " + photo.coordStr(), 0, 0, 0xAAAAAA, false);
                 guiGraphics.pose().popPose();
+
+                // Subtle 1px divider
+                guiGraphics.fill(listX + 2, listY + 29, listX + listW - 2, listY + 30, 0xFF1C1C1E);
 
                 listY += 32;
             }

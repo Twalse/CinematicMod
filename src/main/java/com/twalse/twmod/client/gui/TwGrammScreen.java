@@ -4,6 +4,7 @@ import com.twalse.twmod.quest.ClientQuestData;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TwGrammScreen extends Screen {
+    public static final ResourceLocation BG_BLUE = new ResourceLocation("twmod", "textures/gui/phone_bg_blue.png");
     private final Screen parent;
     public static final int PHONE_WIDTH = PhoneScreen.PHONE_WIDTH;
     public static final int PHONE_HEIGHT = PhoneScreen.PHONE_HEIGHT;
@@ -29,7 +31,6 @@ public class TwGrammScreen extends Screen {
     private List<String> getCombinedMessages(String contactId) {
         List<String> result = new ArrayList<>();
 
-        // Initial default story messages if no custom messages set
         if ("boss".equalsIgnoreCase(contactId)) {
             result.add("Босс: Мне нужны фотографии товара.");
             result.add("Босс: Жду координаты места.");
@@ -38,13 +39,11 @@ public class TwGrammScreen extends Screen {
             result.add("Барыга: Загляни в маркет.");
         }
 
-        // Add dynamic capability messages from server
         List<String> dynamicMsgs = ClientQuestData.getMessagesForContact(contactId);
         if (dynamicMsgs != null) {
             result.addAll(dynamicMsgs);
         }
 
-        // Add local responses sent in session
         List<String> userSent = localResponses.get(contactId);
         if (userSent != null) {
             result.addAll(userSent);
@@ -72,16 +71,16 @@ public class TwGrammScreen extends Screen {
         int sidebarW = 28;
 
         if (mouseX >= sidebarX && mouseX <= sidebarX + sidebarW) {
-            if (mouseY >= phoneY + 30 && mouseY <= phoneY + 54) {
+            if (mouseY >= phoneY + 28 && mouseY <= phoneY + 50) {
                 this.selectedChat = "boss";
                 return true;
-            } else if (mouseY >= phoneY + 58 && mouseY <= phoneY + 82) {
+            } else if (mouseY >= phoneY + 54 && mouseY <= phoneY + 76) {
                 this.selectedChat = "dealer";
                 return true;
             }
         }
 
-        // Custom "Отправить данные" flat button click
+        // Custom "Отправить данные" button click
         int sendBtnX = phoneX + 34;
         int sendBtnY = phoneY + PHONE_HEIGHT - 38;
         int sendBtnW = PHONE_WIDTH - 38;
@@ -104,22 +103,22 @@ public class TwGrammScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // Background: phone_bg_dark.png
-        guiGraphics.blit(PhoneScreen.BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
+        // Background: phone_bg_blue.png
+        guiGraphics.blit(BG_BLUE, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
 
         // Header Title
-        guiGraphics.drawString(this.font, "✈️ TwGramm", phoneX + 10, phoneY + 14, 0xFF0088CC, false);
+        guiGraphics.drawString(this.font, "✈️ TwGramm", phoneX + 8, phoneY + 14, 0xFF70C2F0, false);
 
         // Left Contacts Sidebar
         int sidebarX = phoneX + 4;
-        int sidebarY = phoneY + 28;
+        int sidebarY = phoneY + 26;
         int sidebarW = 28;
-        int sidebarH = PHONE_HEIGHT - 50;
+        int sidebarH = PHONE_HEIGHT - 48;
 
-        guiGraphics.fill(sidebarX, sidebarY, sidebarX + sidebarW, sidebarY + sidebarH, 0xFF1C1C24);
+        guiGraphics.fill(sidebarX, sidebarY, sidebarX + sidebarW, sidebarY + sidebarH, 0xFF141D26);
 
         // Contact 1: Boss
-        int bossColor = "boss".equalsIgnoreCase(selectedChat) ? 0xFF0088CC : 0xFF2C2C38;
+        int bossColor = "boss".equalsIgnoreCase(selectedChat) ? 0xFF0088CC : 0xFF242F3D;
         guiGraphics.fill(sidebarX + 2, sidebarY + 2, sidebarX + sidebarW - 2, sidebarY + 24, bossColor);
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(sidebarX + 4, sidebarY + 8, 0);
@@ -128,10 +127,10 @@ public class TwGrammScreen extends Screen {
         guiGraphics.pose().popPose();
 
         // Contact 2: Dealer
-        int dealerColor = "dealer".equalsIgnoreCase(selectedChat) ? 0xFF0088CC : 0xFF2C2C38;
-        guiGraphics.fill(sidebarX + 2, sidebarY + 28, sidebarX + sidebarW - 2, sidebarY + 50, dealerColor);
+        int dealerColor = "dealer".equalsIgnoreCase(selectedChat) ? 0xFF0088CC : 0xFF242F3D;
+        guiGraphics.fill(sidebarX + 2, sidebarY + 26, sidebarX + sidebarW - 2, sidebarY + 48, dealerColor);
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(sidebarX + 4, sidebarY + 34, 0);
+        guiGraphics.pose().translate(sidebarX + 4, sidebarY + 32, 0);
         guiGraphics.pose().scale(0.65f, 0.65f, 1.0f);
         guiGraphics.drawString(this.font, "Барыга", 0, 0, 0xFFFFFFFF, false);
         guiGraphics.pose().popPose();
@@ -140,40 +139,38 @@ public class TwGrammScreen extends Screen {
         int chatX = sidebarX + sidebarW + 2;
         int chatY = sidebarY;
         int chatW = PHONE_WIDTH - sidebarW - 8;
-        int chatH = PHONE_HEIGHT - 68;
+        int chatH = PHONE_HEIGHT - 66;
 
-        guiGraphics.fill(chatX, chatY, chatX + chatW, chatY + chatH, 0xFF0F141C);
+        guiGraphics.fill(chatX, chatY, chatX + chatW, chatY + chatH, 0xFF0E1621);
 
         // Chat Header Name
         String chatName = "boss".equalsIgnoreCase(selectedChat) ? "Босс" : "Барыга";
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(chatX + 4, chatY + 4, 0);
         guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
-        guiGraphics.drawString(this.font, "💬 " + chatName, 0, 0, 0xFF0088CC, false);
+        guiGraphics.drawString(this.font, "💬 " + chatName, 0, 0, 0xFF70C2F0, false);
         guiGraphics.pose().popPose();
 
-        // Chat Message History with Word Wrapping and Bubbles
+        // Chat Message History
         List<String> messages = getCombinedMessages(selectedChat);
         int msgY = chatY + 16;
-        float textScale = 0.65f;
-        int maxTextWidth = (int) ((chatW - 10) / textScale);
+        float textScale = 0.60f;
+        int maxTextWidth = (int) ((chatW - 8) / textScale);
 
         for (String msg : messages) {
             if (msgY > chatY + chatH - 12) break;
 
             boolean isPlayer = msg.startsWith("Вы:");
-            int bubbleColor = isPlayer ? 0xFF1E3A2B : 0xFF252D3A;
-            int textColor = isPlayer ? 0xFF7FFFD4 : 0xFFE0E0E0;
+            int bubbleColor = isPlayer ? 0xFF2B5278 : 0xFF182533;
+            int textColor = isPlayer ? 0xFFBEE6FF : 0xFFE0E0E0;
 
             List<FormattedCharSequence> wrappedLines = this.font.split(Component.literal(msg), maxTextWidth);
             int bubbleHeight = (int) (wrappedLines.size() * (9 * textScale) + 4);
 
             if (msgY + bubbleHeight > chatY + chatH) break;
 
-            // Draw Telegram Message Bubble
             guiGraphics.fill(chatX + 2, msgY, chatX + chatW - 2, msgY + bubbleHeight, bubbleColor);
 
-            // Draw Message Lines
             int lineY = msgY + 2;
             for (FormattedCharSequence line : wrappedLines) {
                 guiGraphics.pose().pushPose();
@@ -188,21 +185,26 @@ public class TwGrammScreen extends Screen {
             msgY += bubbleHeight + 3;
         }
 
-        // Custom "Отправить данные" Flat Button
+        // Custom "Отправить данные" Flat Button - Centered text precisely
         int sendBtnX = chatX;
         int sendBtnY = phoneY + PHONE_HEIGHT - 38;
         int sendBtnW = chatW;
         int sendBtnH = 16;
 
         boolean sendHovered = mouseX >= sendBtnX && mouseX <= sendBtnX + sendBtnW && mouseY >= sendBtnY && mouseY <= sendBtnY + sendBtnH;
-        int sendBtnColor = sendHovered ? 0xFF00A0E6 : 0xFF0088CC;
+        int sendBtnColor = sendHovered ? 0xFF0099E6 : 0xFF0088CC;
 
         guiGraphics.fill(sendBtnX, sendBtnY, sendBtnX + sendBtnW, sendBtnY + sendBtnH, sendBtnColor);
 
+        String btnLabel = "📩 Отправить";
+        float btnScale = 0.65f;
+        int labelW = (int) (this.font.width(btnLabel) * btnScale);
+        float textX = sendBtnX + (sendBtnW - labelW) / 2.0f;
+
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(sendBtnX + sendBtnW / 2.0f, sendBtnY + 4, 0);
-        guiGraphics.pose().scale(0.65f, 0.65f, 1.0f);
-        guiGraphics.drawCenteredString(this.font, "📩 Отправить данные", 0, 0, 0xFFFFFFFF);
+        guiGraphics.pose().translate(textX, sendBtnY + 4, 0);
+        guiGraphics.pose().scale(btnScale, btnScale, 1.0f);
+        guiGraphics.drawString(this.font, btnLabel, 0, 0, 0xFFFFFFFF, false);
         guiGraphics.pose().popPose();
 
         // iPhone 17 Home Indicator Bar

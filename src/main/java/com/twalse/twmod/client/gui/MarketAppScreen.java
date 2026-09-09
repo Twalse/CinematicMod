@@ -33,25 +33,26 @@ public class MarketAppScreen extends Screen {
             return true;
         }
 
-        int listX = phoneX + 6;
-        int itemW = PHONE_WIDTH - 12;
+        int listX = phoneX + 8;
+        int itemW = PHONE_WIDTH - 16;
         int startY = phoneY + 44;
         int itemH = 22;
+        int gapY = 24;
 
         if (mouseX >= listX && mouseX <= listX + itemW) {
             if (mouseY >= startY && mouseY <= startY + itemH) {
                 PacketHandler.sendToServer(new BuyItemPacket("lockpick"));
                 return true;
-            } else if (mouseY >= startY + 25 && mouseY <= startY + 25 + itemH) {
+            } else if (mouseY >= startY + gapY && mouseY <= startY + gapY + itemH) {
                 PacketHandler.sendToServer(new BuyItemPacket("medkit"));
                 return true;
-            } else if (mouseY >= startY + 50 && mouseY <= startY + 50 + itemH) {
+            } else if (mouseY >= startY + gapY * 2 && mouseY <= startY + gapY * 2 + itemH) {
                 PacketHandler.sendToServer(new BuyItemPacket("syringe"));
                 return true;
-            } else if (mouseY >= startY + 75 && mouseY <= startY + 75 + itemH) {
+            } else if (mouseY >= startY + gapY * 3 && mouseY <= startY + gapY * 3 + itemH) {
                 PacketHandler.sendToServer(new BuyItemPacket("tacz_9mm"));
                 return true;
-            } else if (mouseY >= startY + 100 && mouseY <= startY + 100 + itemH) {
+            } else if (mouseY >= startY + gapY * 4 && mouseY <= startY + gapY * 4 + itemH) {
                 PacketHandler.sendToServer(new BuyItemPacket("heavy_cargo"));
                 return true;
             }
@@ -80,16 +81,17 @@ public class MarketAppScreen extends Screen {
         int money = vars.getOrDefault("money", vars.getOrDefault("coins", 0));
         guiGraphics.drawCenteredString(this.font, "Баланс: " + money + " 🪙", centerX, phoneY + 28, 0xFFFF55);
 
-        int listX = phoneX + 6;
-        int itemW = PHONE_WIDTH - 12;
+        int listX = phoneX + 8;
+        int itemW = PHONE_WIDTH - 16;
         int startY = phoneY + 44;
         int itemH = 22;
+        int gapY = 24;
 
         renderMarketItem(guiGraphics, mouseX, mouseY, listX, startY, itemW, itemH, "🛠️ Отмычка", "50🪙");
-        renderMarketItem(guiGraphics, mouseX, mouseY, listX, startY + 25, itemW, itemH, "🩹 Аптечка", "200🪙");
-        renderMarketItem(guiGraphics, mouseX, mouseY, listX, startY + 50, itemW, itemH, "💉 Шприц", "150🪙");
-        renderMarketItem(guiGraphics, mouseX, mouseY, listX, startY + 75, itemW, itemH, "🔫 Патроны 9mm", "100🪙");
-        renderMarketItem(guiGraphics, mouseX, mouseY, listX, startY + 100, itemW, itemH, "📦 Контрабанда", "300🪙");
+        renderMarketItem(guiGraphics, mouseX, mouseY, listX, startY + gapY, itemW, itemH, "🩹 Аптечка", "200🪙");
+        renderMarketItem(guiGraphics, mouseX, mouseY, listX, startY + gapY * 2, itemW, itemH, "💉 Шприц", "150🪙");
+        renderMarketItem(guiGraphics, mouseX, mouseY, listX, startY + gapY * 3, itemW, itemH, "🔫 Патроны 9mm", "100🪙");
+        renderMarketItem(guiGraphics, mouseX, mouseY, listX, startY + gapY * 4, itemW, itemH, "📦 Контрабанда", "300🪙");
 
         // iPhone 17 Home Indicator Bar
         int navBarX = centerX - 16;
@@ -105,17 +107,26 @@ public class MarketAppScreen extends Screen {
 
         guiGraphics.fill(x, y, x + w, y + h, bgColor);
 
+        // Item Name on Left
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(x + 4, y + 7, 0);
-        guiGraphics.pose().scale(0.85f, 0.85f, 1.0f);
+        guiGraphics.pose().translate(x + 4, y + 6, 0);
+        guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
         guiGraphics.drawString(this.font, name, 0, 0, 0xFFFFFFFF, false);
         guiGraphics.pose().popPose();
 
+        // Price Text right-aligned dynamically using font.width()
+        float priceScale = 0.75f;
+        int priceWidth = (int) (this.font.width(price) * priceScale);
+        int priceX = (x + w - 4) - priceWidth;
+
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(x + w - 34, y + 7, 0);
-        guiGraphics.pose().scale(0.8f, 0.8f, 1.0f);
+        guiGraphics.pose().translate(priceX, y + 6, 0);
+        guiGraphics.pose().scale(priceScale, priceScale, 1.0f);
         guiGraphics.drawString(this.font, price, 0, 0, 0xFFFF55, false);
         guiGraphics.pose().popPose();
+
+        // Subtle 1px divider
+        guiGraphics.fill(x + 2, y + h + 1, x + w - 2, y + h + 2, 0xFF1C1C1E);
     }
 
     @Override
