@@ -3,44 +3,17 @@ package com.twalse.twmod.client.gui;
 import com.twalse.twmod.networking.PacketHandler;
 import com.twalse.twmod.networking.message.ExecuteContactActionPacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public class ContactsAppScreen extends Screen {
     private final Screen parent;
-    private static final int PHONE_WIDTH = 140;
-    private static final int PHONE_HEIGHT = 250;
+    public static final int PHONE_WIDTH = PhoneScreen.PHONE_WIDTH;
+    public static final int PHONE_HEIGHT = PhoneScreen.PHONE_HEIGHT;
 
     public ContactsAppScreen(Screen parent) {
         super(Component.literal("Contacts"));
         this.parent = parent;
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        int centerX = this.width / 2;
-        int centerY = this.height / 2;
-        int phoneX = centerX - PHONE_WIDTH / 2;
-        int phoneY = centerY - PHONE_HEIGHT / 2;
-
-        int buttonY = phoneY + 45;
-
-        // Contact 1: Boss
-        this.addRenderableWidget(Button.builder(Component.literal("📞 Босс"), btn -> {
-            PacketHandler.sendToServer(new ExecuteContactActionPacket("boss"));
-        }).bounds(phoneX + 12, buttonY, 116, 26).build());
-
-        // Contact 2: Dealer / Baryga
-        this.addRenderableWidget(Button.builder(Component.literal("📞 Барыга"), btn -> {
-            PacketHandler.sendToServer(new ExecuteContactActionPacket("dealer"));
-        }).bounds(phoneX + 12, buttonY + 32, 116, 26).build());
-
-        // Contact 3: Information Line
-        this.addRenderableWidget(Button.builder(Component.literal("📞 Информатор"), btn -> {
-            PacketHandler.sendToServer(new ExecuteContactActionPacket("informant"));
-        }).bounds(phoneX + 12, buttonY + 64, 116, 26).build());
     }
 
     @Override
@@ -50,12 +23,29 @@ public class ContactsAppScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // Check Home Button click
-        int homeBtnX = centerX - 15;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 22;
-        if (mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12) {
+        // Bottom Home Indicator click
+        if (mouseY >= phoneY + PHONE_HEIGHT - 18 && mouseY <= phoneY + PHONE_HEIGHT - 2 &&
+            mouseX >= phoneX && mouseX <= phoneX + PHONE_WIDTH) {
             this.minecraft.setScreen(this.parent);
             return true;
+        }
+
+        int listX = phoneX + 8;
+        int itemW = PHONE_WIDTH - 16;
+        int startY = phoneY + 36;
+        int itemH = 24;
+
+        if (mouseX >= listX && mouseX <= listX + itemW) {
+            if (mouseY >= startY && mouseY <= startY + itemH) {
+                PacketHandler.sendToServer(new ExecuteContactActionPacket("boss"));
+                return true;
+            } else if (mouseY >= startY + 28 && mouseY <= startY + 28 + itemH) {
+                PacketHandler.sendToServer(new ExecuteContactActionPacket("dealer"));
+                return true;
+            } else if (mouseY >= startY + 56 && mouseY <= startY + 56 + itemH) {
+                PacketHandler.sendToServer(new ExecuteContactActionPacket("informant"));
+                return true;
+            }
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
@@ -70,24 +60,35 @@ public class ContactsAppScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // Phone Frame & Display
-        guiGraphics.fill(phoneX - 6, phoneY - 10, phoneX + PHONE_WIDTH + 6, phoneY + PHONE_HEIGHT + 10, 0xFF1C1C1E);
-        guiGraphics.fill(phoneX - 4, phoneY - 8, phoneX + PHONE_WIDTH + 4, phoneY + PHONE_HEIGHT + 8, 0xFF2C2C2E);
-        guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0D0D11);
+        // Background: phone_bg_dark.png
+        guiGraphics.blit(PhoneScreen.BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
 
         // Header
-        guiGraphics.drawCenteredString(this.font, "КОНТАКТЫ", centerX, phoneY + 18, 0xFFD4AF37);
+        guiGraphics.drawCenteredString(this.font, "Контакты", centerX, phoneY + 18, 0xFFE0E0E0);
 
-        // Bottom Home Button
-        int homeBtnX = centerX - 15;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 20;
-        boolean homeHovered = mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12;
-        int homeColor = homeHovered ? 0xFFD4AF37 : 0xFF555555;
+        int listX = phoneX + 8;
+        int itemW = PHONE_WIDTH - 16;
+        int startY = phoneY + 36;
+        int itemH = 24;
 
-        guiGraphics.fill(homeBtnX, homeBtnY, homeBtnX + 30, homeBtnY + 10, homeColor);
-        guiGraphics.drawCenteredString(this.font, "—", centerX, homeBtnY + 1, 0xFFFFFFFF);
+        renderContactCard(guiGraphics, mouseX, mouseY, listX, startY, itemW, itemH, "📞 Босс");
+        renderContactCard(guiGraphics, mouseX, mouseY, listX, startY + 28, itemW, itemH, "📞 Барыга");
+        renderContactCard(guiGraphics, mouseX, mouseY, listX, startY + 56, itemW, itemH, "📞 Информатор");
+
+        // iPhone 17 Home Indicator Bar
+        int navBarX = centerX - 16;
+        int navBarY = phoneY + PHONE_HEIGHT - 10;
+        guiGraphics.fill(navBarX, navBarY, navBarX + 32, navBarY + 3, 0xDDFFFFFF);
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
+    private void renderContactCard(GuiGraphics guiGraphics, int mouseX, int mouseY, int x, int y, int w, int h, String name) {
+        boolean hovered = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
+        int bgColor = hovered ? 0xFF3A3A3C : 0xFF2C2C2E;
+
+        guiGraphics.fill(x, y, x + w, y + h, bgColor);
+        guiGraphics.drawString(this.font, name, x + 8, y + 8, 0xFFFFFFFF, false);
     }
 
     @Override

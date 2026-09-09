@@ -14,10 +14,11 @@ import java.util.List;
 
 public class PhoneScreen extends Screen {
 
-    public static final ResourceLocation PHONE_FRAME = new ResourceLocation("twmod", "textures/gui/phone_frame.png");
+    public static final ResourceLocation BG_BLACK = new ResourceLocation("twmod", "textures/gui/phone_bg_black.png");
+    public static final ResourceLocation BG_DARK = new ResourceLocation("twmod", "textures/gui/phone_bg_dark.png");
 
-    private static final int PHONE_WIDTH = 104;
-    private static final int PHONE_HEIGHT = 214;
+    public static final int PHONE_WIDTH = 104;
+    public static final int PHONE_HEIGHT = 214;
 
     public enum PhoneState {
         OFF,
@@ -61,11 +62,10 @@ public class PhoneScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // Check if click is inside phone frame area
         boolean insidePhone = mouseX >= phoneX && mouseX <= phoneX + PHONE_WIDTH && mouseY >= phoneY && mouseY <= phoneY + PHONE_HEIGHT;
 
         if (state == PhoneState.OFF) {
-            if (insidePhone && button == 0) { // Left click turns phone on
+            if (insidePhone && button == 0) {
                 state = PhoneState.BOOTING;
                 bootStartTime = Util.getMillis();
                 return true;
@@ -93,11 +93,10 @@ public class PhoneScreen extends Screen {
                         this.onClose();
                     }
                 } else if (relX < zoneWidth * 2) {
-                    // Center third: Home (Stay on desktop)
+                    // Center third: Home
                 } else {
                     // Right third: Recents
                     TwLogger.info("Открытие недавних");
-                    System.out.println("Открытие недавних");
                 }
                 return true;
             }
@@ -147,37 +146,22 @@ public class PhoneScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // 1. Render Phone Frame (104x214) Texture
-        try {
-            guiGraphics.blit(PHONE_FRAME, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
-        } catch (Exception e) {
-            guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0B1021);
-        }
-
-        // Inner screen region (inside phone frame)
-        int screenX = phoneX + 4;
-        int screenY = phoneY + 4;
-        int screenW = PHONE_WIDTH - 8;
-        int screenH = PHONE_HEIGHT - 8;
-
         if (state == PhoneState.OFF) {
-            // Render completely black inner screen when OFF
-            guiGraphics.fill(screenX, screenY, screenX + screenW, screenY + screenH, 0xFF000000);
-            // Camera Notch
-            guiGraphics.fill(centerX - 12, phoneY + 4, centerX + 12, phoneY + 6, 0xFF000000);
+            // Render phone_bg_black.png
+            guiGraphics.blit(BG_BLACK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
             super.render(guiGraphics, mouseX, mouseY, partialTick);
             return;
         }
 
         if (state == PhoneState.BOOTING) {
             long elapsed = Util.getMillis() - bootStartTime;
-            long bootDuration = 2500L; // 2.5 seconds boot animation
+            long bootDuration = 2000L; // 2.0 seconds boot animation
 
             if (elapsed >= bootDuration) {
                 state = PhoneState.ACTIVE;
             } else {
-                // Black screen background
-                guiGraphics.fill(screenX, screenY, screenX + screenW, screenY + screenH, 0xFF000000);
+                // Render phone_bg_dark.png
+                guiGraphics.blit(BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
 
                 // Smooth fade-in and fade-out alpha for "TwOS" text
                 double progress = (double) elapsed / bootDuration; // 0.0 to 1.0
@@ -191,18 +175,15 @@ public class PhoneScreen extends Screen {
                 guiGraphics.drawCenteredString(this.font, "TwOS", 0, 0, textColor);
                 guiGraphics.pose().popPose();
 
-                // Camera Notch
-                guiGraphics.fill(centerX - 12, phoneY + 4, centerX + 12, phoneY + 6, 0xFF000000);
                 super.render(guiGraphics, mouseX, mouseY, partialTick);
                 return;
             }
         }
 
-        // State is ACTIVE: Desktop UI
-        // 2. Camera Notch
-        guiGraphics.fill(centerX - 12, phoneY + 4, centerX + 12, phoneY + 6, 0xFF000000);
+        // State is ACTIVE: Render phone_bg_dark.png background
+        guiGraphics.blit(BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
 
-        // 3. Status Bar: Game Time & Signal/Airplane
+        // Status Bar: Game Time & Signal/Airplane
         Minecraft mc = Minecraft.getInstance();
         String timeStr = "12:00";
         if (mc.level != null) {
@@ -215,21 +196,21 @@ public class PhoneScreen extends Screen {
         String signalStr = SettingsAppScreen.airplaneMode ? "✈️" : "ıll 100%";
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(phoneX + 8, phoneY + 8, 0);
-        guiGraphics.pose().scale(0.6f, 0.6f, 1.0f);
+        guiGraphics.pose().translate(phoneX + 10, phoneY + 12, 0);
+        guiGraphics.pose().scale(0.55f, 0.55f, 1.0f);
         guiGraphics.drawString(this.font, timeStr, 0, 0, 0xEEEEEE, true);
         guiGraphics.pose().popPose();
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(phoneX + PHONE_WIDTH - 32, phoneY + 8, 0);
-        guiGraphics.pose().scale(0.6f, 0.6f, 1.0f);
+        guiGraphics.pose().translate(phoneX + PHONE_WIDTH - 34, phoneY + 12, 0);
+        guiGraphics.pose().scale(0.55f, 0.55f, 1.0f);
         guiGraphics.drawString(this.font, signalStr, 0, 0, 0xEEEEEE, true);
         guiGraphics.pose().popPose();
 
-        // 4. Desktop App Icons Grid (icon_*.png 32x32 textures rendered scaled to 24x24)
+        // Desktop App Icons Grid
         List<AppEntry> installed = getInstalledAppEntries();
         int gridStartX = phoneX + 10;
-        int gridStartY = phoneY + 26;
+        int gridStartY = phoneY + 28;
         int iconSize = 24;
         int gapX = 5;
         int gapY = 16;
@@ -248,14 +229,13 @@ public class PhoneScreen extends Screen {
                 if (hovered) {
                     guiGraphics.fill(ix - 1, iy - 1, ix + iconSize + 1, iy + iconSize + 1, 0x40FFFFFF);
                 }
-                // Blit method scaling 32x32 texture into 24x24 iconSize destination without clipping
-                guiGraphics.blit(app.icon(), ix, iy, iconSize, iconSize, 0.0F, 0.0F, 32, 32, 32, 32);
+                guiGraphics.blit(app.icon(), ix, iy, 0.0F, 0.0F, iconSize, iconSize, 32, 32);
             } catch (Exception ignored) {
             }
 
-            // Scaled App Label (0.6f) with drop shadow, centered under icon
+            // Scaled App Label
             guiGraphics.pose().pushPose();
-            float labelScale = 0.6f;
+            float labelScale = 0.55f;
             float iconCenterX = ix + iconSize / 2.0f;
             float labelY = iy + iconSize + 2;
 
@@ -266,7 +246,7 @@ public class PhoneScreen extends Screen {
             guiGraphics.pose().popPose();
         }
 
-        // 5. iPhone 17 Navigation - Home Indicator Bar
+        // iPhone 17 Home Indicator Bar
         int navBarX = centerX - 16;
         int navBarY = phoneY + PHONE_HEIGHT - 10;
         guiGraphics.fill(navBarX, navBarY, navBarX + 32, navBarY + 3, 0xDDFFFFFF);

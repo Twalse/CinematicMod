@@ -4,7 +4,6 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.twalse.twmod.util.TwLogger;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -16,17 +15,6 @@ public class CameraAppScreen extends Screen {
     public CameraAppScreen(Screen parent) {
         super(Component.literal("Camera"));
         this.parent = parent;
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        int centerX = this.width / 2;
-        int bottomY = this.height - 35;
-
-        // Take Snapshot Button
-        this.addRenderableWidget(Button.builder(Component.literal("📸 Сделать фото"), btn -> takePhoto())
-                .bounds(centerX - 60, bottomY, 120, 24).build());
     }
 
     private void takePhoto() {
@@ -50,6 +38,20 @@ public class CameraAppScreen extends Screen {
         } catch (Exception e) {
             TwLogger.error("Failed to take camera screenshot", e);
         }
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        int centerX = this.width / 2;
+        int bottomY = this.height - 35;
+
+        // Custom shutter button click
+        if (mouseX >= centerX - 60 && mouseX <= centerX + 60 && mouseY >= bottomY && mouseY <= bottomY + 24) {
+            takePhoto();
+            return true;
+        }
+
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
@@ -78,6 +80,14 @@ public class CameraAppScreen extends Screen {
 
         guiGraphics.fill(w - 15, h - 2, w, h, 0xFFFFFFFF);
         guiGraphics.fill(w - 2, h - 15, w, h, 0xFFFFFFFF);
+
+        // Custom Shutter Button
+        int bottomY = this.height - 35;
+        boolean btnHovered = mouseX >= centerX - 60 && mouseX <= centerX + 60 && mouseY >= bottomY && mouseY <= bottomY + 24;
+        int btnColor = btnHovered ? 0xFFE0E0E0 : 0xFFFFFFFF;
+
+        guiGraphics.fill(centerX - 60, bottomY, centerX + 60, bottomY + 24, btnColor);
+        guiGraphics.drawCenteredString(this.font, "📸 Сделать фото", centerX, bottomY + 8, 0xFF000000);
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }

@@ -2,7 +2,6 @@ package com.twalse.twmod.client.gui;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -13,8 +12,8 @@ import java.util.Random;
 
 public class DinoGameScreen extends Screen {
     private final Screen parent;
-    private static final int PHONE_WIDTH = 150;
-    private static final int PHONE_HEIGHT = 260;
+    public static final int PHONE_WIDTH = PhoneScreen.PHONE_WIDTH;
+    public static final int PHONE_HEIGHT = PhoneScreen.PHONE_HEIGHT;
 
     // Physics & Game state
     private float dinoY = 0.0f; // Height above ground (0 = on ground)
@@ -27,25 +26,9 @@ public class DinoGameScreen extends Screen {
     private int spawnTimer = 0;
     private final Random random = new Random();
 
-    private Button restartButton;
-
     public DinoGameScreen(Screen parent) {
         super(Component.literal("Dino Game"));
         this.parent = parent;
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        int centerX = this.width / 2;
-        int centerY = this.height / 2;
-        int phoneY = centerY - PHONE_HEIGHT / 2;
-
-        this.restartButton = Button.builder(Component.literal("🔄 Рестарт"), btn -> resetGame())
-                .bounds(centerX - 40, phoneY + 140, 80, 20).build();
-        this.restartButton.visible = false;
-        this.addRenderableWidget(this.restartButton);
-
         resetGame();
     }
 
@@ -57,15 +40,12 @@ public class DinoGameScreen extends Screen {
         this.gameOver = false;
         this.cactiX.clear();
         this.spawnTimer = 0;
-        if (this.restartButton != null) {
-            this.restartButton.visible = false;
-        }
     }
 
     private void jump() {
         if (!isJumping && !gameOver) {
             isJumping = true;
-            velocityY = 6.0f; // Initial upward velocity
+            velocityY = 6.0f;
         }
     }
 
@@ -76,10 +56,10 @@ public class DinoGameScreen extends Screen {
 
         score++;
 
-        // Apply jump physics
+        // Physics
         if (isJumping) {
             dinoY += velocityY;
-            velocityY -= 0.5f; // Gravity
+            velocityY -= 0.5f;
 
             if (dinoY <= 0.0f) {
                 dinoY = 0.0f;
@@ -90,40 +70,34 @@ public class DinoGameScreen extends Screen {
 
         // Spawn cacti
         spawnTimer++;
-        if (spawnTimer >= 40 + random.nextInt(30)) {
-            cactiX.add(130.0f); // Spawn at right side of phone screen
+        if (spawnTimer >= 35 + random.nextInt(25)) {
+            cactiX.add(90.0f);
             spawnTimer = 0;
         }
 
-        // Move cacti and collision check
-        float dinoX = 20.0f; // Dino fixed X offset
-        float dinoWidth = 14.0f;
-        float dinoHeight = 16.0f;
+        // Move cacti and check collision
+        float dinoX = 15.0f;
+        float dinoWidth = 12.0f;
 
         Iterator<Float> iterator = cactiX.iterator();
         while (iterator.hasNext()) {
-            float cx = iterator.next() - 3.0f; // Speed
-            if (cx < -20.0f) {
+            float cx = iterator.next() - 2.5f;
+            if (cx < -15.0f) {
                 iterator.remove();
             } else {
-                // Update position in list
-                int idx = cactiX.indexOf(cx + 3.0f);
+                int idx = cactiX.indexOf(cx + 2.5f);
                 if (idx >= 0) {
                     cactiX.set(idx, cx);
                 }
 
-                // Collision Box check
-                float cactusWidth = 10.0f;
-                float cactusHeight = 18.0f;
+                float cactusWidth = 8.0f;
+                float cactusHeight = 16.0f;
 
                 boolean xOverlap = dinoX < cx + cactusWidth && dinoX + dinoWidth > cx;
-                boolean yOverlap = dinoY < cactusHeight; // Dino ground collision
+                boolean yOverlap = dinoY < cactusHeight;
 
                 if (xOverlap && yOverlap) {
                     gameOver = true;
-                    if (this.restartButton != null) {
-                        this.restartButton.visible = true;
-                    }
                     break;
                 }
             }
@@ -147,16 +121,20 @@ public class DinoGameScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // Check Home Button click
-        int homeBtnX = centerX - 15;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 22;
-        if (mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12) {
+        // Bottom Home Indicator click
+        if (mouseY >= phoneY + PHONE_HEIGHT - 18 && mouseY <= phoneY + PHONE_HEIGHT - 2 &&
+            mouseX >= phoneX && mouseX <= phoneX + PHONE_WIDTH) {
             this.minecraft.setScreen(this.parent);
             return true;
         }
 
-        // Click on phone screen area triggers jump
-        if (!gameOver && mouseX >= phoneX && mouseX <= phoneX + PHONE_WIDTH && mouseY >= phoneY && mouseY <= phoneY + PHONE_HEIGHT) {
+        // Restart button click if Game Over
+        if (gameOver) {
+            if (mouseX >= centerX - 30 && mouseX <= centerX + 30 && mouseY >= phoneY + 120 && mouseY <= phoneY + 138) {
+                resetGame();
+                return true;
+            }
+        } else if (mouseX >= phoneX && mouseX <= phoneX + PHONE_WIDTH && mouseY >= phoneY && mouseY <= phoneY + PHONE_HEIGHT) {
             jump();
             return true;
         }
@@ -174,46 +152,43 @@ public class DinoGameScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // Phone Frame
-        guiGraphics.fill(phoneX - 6, phoneY - 10, phoneX + PHONE_WIDTH + 6, phoneY + PHONE_HEIGHT + 10, 0xFF1C1C1E);
-        guiGraphics.fill(phoneX - 4, phoneY - 8, phoneX + PHONE_WIDTH + 4, phoneY + PHONE_HEIGHT + 8, 0xFF2C2C2E);
-        guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0D0D11);
+        // Background: phone_bg_dark.png
+        guiGraphics.blit(PhoneScreen.BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
 
-        // Header Title & Score
+        // Header
         guiGraphics.drawCenteredString(this.font, "🦖 DINO RUN", centerX, phoneY + 18, 0xFFD4AF37);
-        guiGraphics.drawCenteredString(this.font, "Score: " + score, centerX, phoneY + 32, 0xFFFFFFFF);
+        guiGraphics.drawCenteredString(this.font, "Score: " + score, centerX, phoneY + 30, 0xFFFFFFFF);
 
-        // Ground Line
-        int groundY = phoneY + 180;
-        guiGraphics.fill(phoneX + 5, groundY, phoneX + PHONE_WIDTH - 5, groundY + 2, 0xFF888888);
+        // Ground
+        int groundY = phoneY + 150;
+        guiGraphics.fill(phoneX + 5, groundY, phoneX + PHONE_WIDTH - 5, groundY + 1, 0xFF888888);
 
-        // Render Dino (Red Box or Icon)
-        int dinoRenderX = phoneX + 20;
-        int dinoRenderY = (int) (groundY - 16 - dinoY);
-        guiGraphics.fill(dinoRenderX, dinoRenderY, dinoRenderX + 14, dinoRenderY + 16, 0xFFDC3545);
-        guiGraphics.fill(dinoRenderX + 10, dinoRenderY + 2, dinoRenderX + 13, dinoRenderY + 5, 0xFFFFFFFF); // Eye
+        // Dino
+        int dinoRenderX = phoneX + 15;
+        int dinoRenderY = (int) (groundY - 14 - dinoY);
+        guiGraphics.fill(dinoRenderX, dinoRenderY, dinoRenderX + 12, dinoRenderY + 14, 0xFFDC3545);
 
-        // Render Cacti (Green Boxes)
+        // Cacti
         for (float cx : cactiX) {
             int cactusRenderX = phoneX + (int) cx;
-            if (cactusRenderX >= phoneX + 5 && cactusRenderX <= phoneX + PHONE_WIDTH - 15) {
-                guiGraphics.fill(cactusRenderX, groundY - 18, cactusRenderX + 10, groundY, 0xFF28A745);
+            if (cactusRenderX >= phoneX + 4 && cactusRenderX <= phoneX + PHONE_WIDTH - 12) {
+                guiGraphics.fill(cactusRenderX, groundY - 16, cactusRenderX + 8, groundY, 0xFF28A745);
             }
         }
 
-        // Game Over Overlay
+        // Game Over
         if (gameOver) {
-            guiGraphics.drawCenteredString(this.font, "GAME OVER", centerX, phoneY + 100, 0xFFFF5555);
+            guiGraphics.drawCenteredString(this.font, "GAME OVER", centerX, phoneY + 90, 0xFFFF5555);
+
+            boolean btnHovered = mouseX >= centerX - 30 && mouseX <= centerX + 30 && mouseY >= phoneY + 120 && mouseY <= phoneY + 138;
+            guiGraphics.fill(centerX - 30, phoneY + 120, centerX + 30, phoneY + 138, btnHovered ? 0xFF00A0E6 : 0xFF0088CC);
+            guiGraphics.drawCenteredString(this.font, "🔄 Снова", centerX, phoneY + 125, 0xFFFFFFFF);
         }
 
-        // Bottom Home Button
-        int homeBtnX = centerX - 15;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 20;
-        boolean homeHovered = mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12;
-        int homeColor = homeHovered ? 0xFFD4AF37 : 0xFF555555;
-
-        guiGraphics.fill(homeBtnX, homeBtnY, homeBtnX + 30, homeBtnY + 10, homeColor);
-        guiGraphics.drawCenteredString(this.font, "—", centerX, homeBtnY + 1, 0xFFFFFFFF);
+        // iPhone 17 Home Indicator Bar
+        int navBarX = centerX - 16;
+        int navBarY = phoneY + PHONE_HEIGHT - 10;
+        guiGraphics.fill(navBarX, navBarY, navBarX + 32, navBarY + 3, 0xDDFFFFFF);
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }

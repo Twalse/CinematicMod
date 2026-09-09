@@ -4,7 +4,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -14,9 +13,8 @@ import java.util.List;
 
 public class GalleryAppScreen extends Screen {
     private final Screen parent;
-    private static final ResourceLocation PHONE_FRAME = PhoneScreen.PHONE_FRAME;
-    private static final int PHONE_WIDTH = 104;
-    private static final int PHONE_HEIGHT = 214;
+    public static final int PHONE_WIDTH = PhoneScreen.PHONE_WIDTH;
+    public static final int PHONE_HEIGHT = PhoneScreen.PHONE_HEIGHT;
 
     private final List<PhotoMeta> photoList = new ArrayList<>();
 
@@ -49,12 +47,12 @@ public class GalleryAppScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
+        int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // Home button
-        int homeBtnX = centerX - 12;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 18;
-        if (mouseX >= homeBtnX && mouseX <= homeBtnX + 24 && mouseY >= homeBtnY && mouseY <= homeBtnY + 10) {
+        // Bottom Home Indicator click
+        if (mouseY >= phoneY + PHONE_HEIGHT - 18 && mouseY <= phoneY + PHONE_HEIGHT - 2 &&
+            mouseX >= phoneX && mouseX <= phoneX + PHONE_WIDTH) {
             this.minecraft.setScreen(this.parent);
             return true;
         }
@@ -71,23 +69,19 @@ public class GalleryAppScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // Phone Frame
-        try {
-            guiGraphics.blit(PHONE_FRAME, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
-        } catch (Exception e) {
-            guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0B1021);
-        }
+        // Background: phone_bg_dark.png
+        guiGraphics.blit(PhoneScreen.BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
 
-        guiGraphics.drawCenteredString(this.font, "🖼️ ГАЛЕРЕЯ", centerX, phoneY + 18, 0xFFD4AF37);
+        guiGraphics.drawCenteredString(this.font, "🖼️ Галерея", centerX, phoneY + 18, 0xFFFFFFFF);
 
         int listY = phoneY + 36;
         if (photoList.isEmpty()) {
-            guiGraphics.drawCenteredString(this.font, "Нет снимков", centerX, phoneY + 90, 0x777777);
+            guiGraphics.drawCenteredString(this.font, "Нет снимков", centerX, phoneY + 90, 0x888888);
         } else {
             for (PhotoMeta photo : photoList) {
                 if (listY > phoneY + PHONE_HEIGHT - 30) break;
 
-                guiGraphics.fill(phoneX + 6, listY, phoneX + PHONE_WIDTH - 6, listY + 28, 0xFF181822);
+                guiGraphics.fill(phoneX + 6, listY, phoneX + PHONE_WIDTH - 6, listY + 28, 0xFF2C2C2E);
                 guiGraphics.drawString(this.font, "📷 " + photo.dateStr(), phoneX + 10, listY + 4, 0xFFFFFF, false);
 
                 guiGraphics.pose().pushPose();
@@ -100,13 +94,10 @@ public class GalleryAppScreen extends Screen {
             }
         }
 
-        // Home Button
-        int homeBtnX = centerX - 12;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 16;
-        boolean homeHovered = mouseX >= homeBtnX && mouseX <= homeBtnX + 24 && mouseY >= homeBtnY && mouseY <= homeBtnY + 10;
-        int homeColor = homeHovered ? 0xFFD4AF37 : 0xFF555555;
-
-        guiGraphics.fill(homeBtnX, homeBtnY, homeBtnX + 24, homeBtnY + 8, homeColor);
+        // iPhone 17 Home Indicator Bar
+        int navBarX = centerX - 16;
+        int navBarY = phoneY + PHONE_HEIGHT - 10;
+        guiGraphics.fill(navBarX, navBarY, navBarX + 32, navBarY + 3, 0xDDFFFFFF);
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
