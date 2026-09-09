@@ -13,10 +13,10 @@ import java.util.List;
 
 public class PhoneScreen extends Screen {
 
-    public static final ResourceLocation PHONE_FRAME = new ResourceLocation(TwMod.MODID, "textures/gui/phone_frame.png");
+    public static final ResourceLocation PHONE_FRAME = new ResourceLocation("twmod", "textures/gui/phone_frame.png");
 
-    private static final int PHONE_WIDTH = 120;
-    private static final int PHONE_HEIGHT = 220;
+    private static final int PHONE_WIDTH = 104;
+    private static final int PHONE_HEIGHT = 214;
 
     public record AppEntry(String id, String name, ResourceLocation icon, java.util.function.Consumer<PhoneScreen> action) {}
 
@@ -26,15 +26,15 @@ public class PhoneScreen extends Screen {
         super(Component.literal("Smartphone"));
 
         // Register available apps in TwOS
-        availableApps.add(new AppEntry("contacts", "Контакты", new ResourceLocation(TwMod.MODID, "textures/gui/icon_contacts.png"), p -> p.minecraft.setScreen(new ContactsAppScreen(p))));
-        availableApps.add(new AppEntry("market", "Маркет", new ResourceLocation(TwMod.MODID, "textures/gui/icon_market.png"), p -> p.minecraft.setScreen(new MarketAppScreen(p))));
-        availableApps.add(new AppEntry("twstore", "TwStore", new ResourceLocation(TwMod.MODID, "textures/gui/icon_store.png"), p -> p.minecraft.setScreen(new TwStoreScreen(p))));
+        availableApps.add(new AppEntry("contacts", "Контакты", new ResourceLocation("twmod", "textures/gui/icon_contacts.png"), p -> p.minecraft.setScreen(new ContactsAppScreen(p))));
+        availableApps.add(new AppEntry("market", "Маркет", new ResourceLocation("twmod", "textures/gui/icon_market.png"), p -> p.minecraft.setScreen(new MarketAppScreen(p))));
+        availableApps.add(new AppEntry("twstore", "TwStore", new ResourceLocation("twmod", "textures/gui/icon_store.png"), p -> p.minecraft.setScreen(new TwStoreScreen(p))));
 
-        availableApps.add(new AppEntry("dino", "Dino", new ResourceLocation(TwMod.MODID, "textures/gui/icon_dino.png"), p -> p.minecraft.setScreen(new DinoGameScreen(p))));
-        availableApps.add(new AppEntry("twgramm", "TwGramm", new ResourceLocation(TwMod.MODID, "textures/gui/icon_twgramm.png"), p -> p.minecraft.setScreen(new TwGrammScreen(p))));
-        availableApps.add(new AppEntry("camera", "Камера", new ResourceLocation(TwMod.MODID, "textures/gui/icon_camera.png"), p -> p.minecraft.setScreen(new CameraAppScreen(p))));
-        availableApps.add(new AppEntry("gallery", "Галерея", new ResourceLocation(TwMod.MODID, "textures/gui/icon_gallery.png"), p -> p.minecraft.setScreen(new GalleryAppScreen(p))));
-        availableApps.add(new AppEntry("settings", "Настройки", new ResourceLocation(TwMod.MODID, "textures/gui/icon_settings.png"), p -> p.minecraft.setScreen(new SettingsAppScreen(p))));
+        availableApps.add(new AppEntry("dino", "Dino", new ResourceLocation("twmod", "textures/gui/icon_dino.png"), p -> p.minecraft.setScreen(new DinoGameScreen(p))));
+        availableApps.add(new AppEntry("twgramm", "TwGramm", new ResourceLocation("twmod", "textures/gui/icon_twgramm.png"), p -> p.minecraft.setScreen(new TwGrammScreen(p))));
+        availableApps.add(new AppEntry("camera", "Камера", new ResourceLocation("twmod", "textures/gui/icon_camera.png"), p -> p.minecraft.setScreen(new CameraAppScreen(p))));
+        availableApps.add(new AppEntry("gallery", "Галерея", new ResourceLocation("twmod", "textures/gui/icon_gallery.png"), p -> p.minecraft.setScreen(new GalleryAppScreen(p))));
+        availableApps.add(new AppEntry("settings", "Настройки", new ResourceLocation("twmod", "textures/gui/icon_settings.png"), p -> p.minecraft.setScreen(new SettingsAppScreen(p))));
     }
 
     @Override
@@ -54,10 +54,10 @@ public class PhoneScreen extends Screen {
 
         // Check App Icon Clicks in Grid Layout (3 Columns x 4 Rows)
         List<AppEntry> installed = getInstalledAppEntries();
-        int gridStartX = phoneX + 12;
-        int gridStartY = phoneY + 28;
-        int iconSize = 28;
-        int gapX = 6;
+        int gridStartX = phoneX + 10;
+        int gridStartY = phoneY + 26;
+        int iconSize = 24;
+        int gapX = 5;
         int gapY = 16;
 
         for (int i = 0; i < installed.size(); i++) {
@@ -96,9 +96,9 @@ public class PhoneScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // 1. Render Phone Frame (120x220) Texture
+        // 1. Render Phone Frame (104x214) Texture with correct u,v & texture dimensions
         try {
-            guiGraphics.blit(PHONE_FRAME, phoneX, phoneY, 0, 0, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
+            guiGraphics.blit(PHONE_FRAME, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
         } catch (Exception e) {
             guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0B1021);
         }
@@ -125,17 +125,17 @@ public class PhoneScreen extends Screen {
         guiGraphics.pose().popPose();
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(phoneX + PHONE_WIDTH - 35, phoneY + 8, 0);
+        guiGraphics.pose().translate(phoneX + PHONE_WIDTH - 32, phoneY + 8, 0);
         guiGraphics.pose().scale(0.6f, 0.6f, 1.0f);
         guiGraphics.drawString(this.font, signalStr, 0, 0, 0xEEEEEE, true);
         guiGraphics.pose().popPose();
 
-        // 4. Desktop App Icons Grid (icon_*.png 32x32 textures)
+        // 4. Desktop App Icons Grid (icon_*.png 32x32 textures rendered at 24x24)
         List<AppEntry> installed = getInstalledAppEntries();
-        int gridStartX = phoneX + 12;
-        int gridStartY = phoneY + 28;
-        int iconSize = 28;
-        int gapX = 6;
+        int gridStartX = phoneX + 10;
+        int gridStartY = phoneY + 26;
+        int iconSize = 24;
+        int gapX = 5;
         int gapY = 16;
 
         for (int i = 0; i < installed.size(); i++) {
@@ -152,11 +152,11 @@ public class PhoneScreen extends Screen {
                 if (hovered) {
                     guiGraphics.fill(ix - 1, iy - 1, ix + iconSize + 1, iy + iconSize + 1, 0x40FFFFFF);
                 }
-                guiGraphics.blit(app.icon(), ix, iy, 0, 0, iconSize, iconSize, iconSize, iconSize);
+                guiGraphics.blit(app.icon(), ix, iy, 0.0F, 0.0F, iconSize, iconSize, 32, 32);
             } catch (Exception ignored) {
             }
 
-            // Scaled App Label (0.6f) with shadow, centered under icon
+            // Scaled App Label (0.6f) with drop shadow, centered under icon
             guiGraphics.pose().pushPose();
             float labelScale = 0.6f;
             float iconCenterX = ix + iconSize / 2.0f;

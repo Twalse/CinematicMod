@@ -76,8 +76,14 @@ public class QuestScoreboardOverlay {
             }
         }
 
+        int visibleVarCount = 0;
         for (Map.Entry<String, Integer> entry : variables.entrySet()) {
-            String line = entry.getKey() + ": " + entry.getValue();
+            String varId = entry.getKey();
+            if (varId.toUpperCase().startsWith("INSTALL_")) {
+                continue; // Skip app installation variables from HUD
+            }
+            visibleVarCount++;
+            String line = varId + ": " + entry.getValue();
             int w = font.width(line) + 30;
             if (w > boxWidth) {
                 boxWidth = w;
@@ -90,9 +96,9 @@ public class QuestScoreboardOverlay {
             boxHeight += 12; // Header
             boxHeight += quests.size() * 22;
         }
-        if (!variables.isEmpty()) {
+        if (visibleVarCount > 0) {
             boxHeight += 12; // Header
-            boxHeight += variables.size() * 16;
+            boxHeight += visibleVarCount * 16;
         }
 
         guiGraphics.pose().pushPose();
@@ -155,13 +161,16 @@ public class QuestScoreboardOverlay {
         }
 
         // Render Variables with Icons
-        if (!variables.isEmpty()) {
+        if (visibleVarCount > 0) {
             Component varHeader = Component.literal("STATS").withStyle(Style.EMPTY.withColor(headerColor).withBold(true));
             guiGraphics.drawString(font, varHeader, padding, currentY, headerColor, false);
             currentY += 12;
 
             for (Map.Entry<String, Integer> entry : variables.entrySet()) {
                 String varId = entry.getKey();
+                if (varId.toUpperCase().startsWith("INSTALL_")) {
+                    continue; // Skip app installation variables from HUD
+                }
                 int value = entry.getValue();
 
                 // Dynamic icon resolution from config mapping, with fallback

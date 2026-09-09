@@ -1,5 +1,6 @@
 package com.twalse.twmod.client.gui;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.twalse.twmod.util.TwLogger;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphics;
@@ -37,20 +38,15 @@ public class CameraAppScreen extends Screen {
                 photosDir.mkdirs();
             }
 
-            // Hide GUI screen briefly and capture screenshot into twmod_photos
-            this.minecraft.setScreen(null);
+            NativeImage nativeImage = Screenshot.takeScreenshot(this.minecraft.getMainRenderTarget());
+            File photoFile = new File(photosDir, System.currentTimeMillis() + ".png");
+            nativeImage.writeToFile(photoFile);
+            nativeImage.close();
 
-            Screenshot.grab(
-                    this.minecraft.gameDirectory,
-                    "twmod_photos/" + System.currentTimeMillis() + ".png",
-                    this.minecraft.getMainRenderTarget(),
-                    msg -> {
-                        TwLogger.info("Camera screenshot saved: {}", msg.getString());
-                        if (this.minecraft.player != null) {
-                            this.minecraft.player.sendSystemMessage(Component.literal("§a[Фото]: Снимки сохранены в twmod_photos!"));
-                        }
-                    }
-            );
+            TwLogger.info("Camera screenshot saved: {}", photoFile.getAbsolutePath());
+            if (this.minecraft.player != null) {
+                this.minecraft.player.sendSystemMessage(Component.literal("§a[Фото]: Снимок сохранен в twmod_photos!"));
+            }
         } catch (Exception e) {
             TwLogger.error("Failed to take camera screenshot", e);
         }
@@ -58,7 +54,7 @@ public class CameraAppScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // Viewfinder reticle overlay (no phone bezel covering screen)
+        // Viewfinder reticle overlay
         int centerX = this.width / 2;
         int centerY = this.height / 2;
         int size = 20;
