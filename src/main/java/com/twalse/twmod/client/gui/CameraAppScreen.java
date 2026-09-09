@@ -1,13 +1,16 @@
 package com.twalse.twmod.client.gui;
 
+import com.twalse.twmod.util.TwLogger;
+import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import java.io.File;
+
 public class CameraAppScreen extends Screen {
     private final Screen parent;
-    private static final int PHONE_WIDTH = 140;
-    private static final int PHONE_HEIGHT = 250;
 
     public CameraAppScreen(Screen parent) {
         super(Component.literal("Camera"));
@@ -15,45 +18,70 @@ public class CameraAppScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    protected void init() {
+        super.init();
         int centerX = this.width / 2;
-        int centerY = this.height / 2;
-        int phoneX = centerX - PHONE_WIDTH / 2;
-        int phoneY = centerY - PHONE_HEIGHT / 2;
+        int bottomY = this.height - 35;
 
-        int homeBtnX = centerX - 15;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 22;
-        if (mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12) {
-            this.minecraft.setScreen(this.parent);
-            return true;
+        // Take Snapshot Button
+        this.addRenderableWidget(Button.builder(Component.literal("📸 Сделать фото"), btn -> takePhoto())
+                .bounds(centerX - 60, bottomY, 120, 24).build());
+    }
+
+    private void takePhoto() {
+        if (this.minecraft == null) return;
+
+        try {
+            File photosDir = new File(this.minecraft.gameDirectory, "twmod_photos");
+            if (!photosDir.exists()) {
+                photosDir.mkdirs();
+            }
+
+            // Hide GUI screen briefly and capture screenshot into twmod_photos
+            this.minecraft.setScreen(null);
+
+            Screenshot.grab(
+                    this.minecraft.gameDirectory,
+                    "twmod_photos/" + System.currentTimeMillis() + ".png",
+                    this.minecraft.getMainRenderTarget(),
+                    msg -> {
+                        TwLogger.info("Camera screenshot saved: {}", msg.getString());
+                        if (this.minecraft.player != null) {
+                            this.minecraft.player.sendSystemMessage(Component.literal("§a[Фото]: Снимки сохранены в twmod_photos!"));
+                        }
+                    }
+            );
+        } catch (Exception e) {
+            TwLogger.error("Failed to take camera screenshot", e);
         }
-
-        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
-
+        // Viewfinder reticle overlay (no phone bezel covering screen)
         int centerX = this.width / 2;
         int centerY = this.height / 2;
-        int phoneX = centerX - PHONE_WIDTH / 2;
-        int phoneY = centerY - PHONE_HEIGHT / 2;
+        int size = 20;
 
-        guiGraphics.fill(phoneX - 6, phoneY - 10, phoneX + PHONE_WIDTH + 6, phoneY + PHONE_HEIGHT + 10, 0xFF1C1C1E);
-        guiGraphics.fill(phoneX - 4, phoneY - 8, phoneX + PHONE_WIDTH + 4, phoneY + PHONE_HEIGHT + 8, 0xFF2C2C2E);
-        guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0D0D11);
+        guiGraphics.fill(centerX - size, centerY - 1, centerX + size, centerY + 1, 0x80FFFFFF);
+        guiGraphics.fill(centerX - 1, centerY - size, centerX + 1, centerY + size, 0x80FFFFFF);
 
-        guiGraphics.drawCenteredString(this.font, "📷 КАМЕРА", centerX, phoneY + 18, 0xFFD4AF37);
-        guiGraphics.drawCenteredString(this.font, "Видоискатель...", centerX, phoneY + 100, 0x888888);
+        // Frame corners
+        int margin = 30;
+        int w = this.width - margin;
+        int h = this.height - margin;
 
-        int homeBtnX = centerX - 15;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 20;
-        boolean homeHovered = mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12;
-        int homeColor = homeHovered ? 0xFFD4AF37 : 0xFF555555;
+        guiGraphics.fill(margin, margin, margin + 15, margin + 2, 0xFFFFFFFF);
+        guiGraphics.fill(margin, margin, margin + 2, margin + 15, 0xFFFFFFFF);
 
-        guiGraphics.fill(homeBtnX, homeBtnY, homeBtnX + 30, homeBtnY + 10, homeColor);
-        guiGraphics.drawCenteredString(this.font, "—", centerX, homeBtnY + 1, 0xFFFFFFFF);
+        guiGraphics.fill(w - 15, margin, w, margin + 2, 0xFFFFFFFF);
+        guiGraphics.fill(w - 2, margin, w, margin + 15, 0xFFFFFFFF);
+
+        guiGraphics.fill(margin, h - 2, margin + 15, h, 0xFFFFFFFF);
+        guiGraphics.fill(margin, h - 15, margin + 2, h, 0xFFFFFFFF);
+
+        guiGraphics.fill(w - 15, h - 2, w, h, 0xFFFFFFFF);
+        guiGraphics.fill(w - 2, h - 15, w, h, 0xFFFFFFFF);
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }

@@ -2,6 +2,7 @@ package com.twalse.twmod.client.gui;
 
 import com.twalse.twmod.TwMod;
 import com.twalse.twmod.quest.ClientQuestData;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -12,10 +13,10 @@ import java.util.List;
 
 public class PhoneScreen extends Screen {
 
-    public static final ResourceLocation PHONE_BG = new ResourceLocation(TwMod.MODID, "textures/gui/phone_bg.png");
+    public static final ResourceLocation PHONE_FRAME = new ResourceLocation(TwMod.MODID, "textures/gui/phone_frame.png");
 
-    private static final int PHONE_WIDTH = 150;
-    private static final int PHONE_HEIGHT = 260;
+    private static final int PHONE_WIDTH = 120;
+    private static final int PHONE_HEIGHT = 220;
 
     public record AppEntry(String id, String name, ResourceLocation icon, java.util.function.Consumer<PhoneScreen> action) {}
 
@@ -25,14 +26,15 @@ public class PhoneScreen extends Screen {
         super(Component.literal("Smartphone"));
 
         // Register available apps in TwOS
-        availableApps.add(new AppEntry("contacts", "Контакты", new ResourceLocation(TwMod.MODID, "textures/gui/app_contacts.png"), p -> p.minecraft.setScreen(new ContactsAppScreen(p))));
-        availableApps.add(new AppEntry("market", "Маркет", new ResourceLocation(TwMod.MODID, "textures/gui/app_market.png"), p -> p.minecraft.setScreen(new MarketAppScreen(p))));
-        availableApps.add(new AppEntry("twstore", "TwStore", new ResourceLocation(TwMod.MODID, "textures/gui/app_twstore.png"), p -> p.minecraft.setScreen(new TwStoreScreen(p))));
+        availableApps.add(new AppEntry("contacts", "Контакты", new ResourceLocation(TwMod.MODID, "textures/gui/icon_contacts.png"), p -> p.minecraft.setScreen(new ContactsAppScreen(p))));
+        availableApps.add(new AppEntry("market", "Маркет", new ResourceLocation(TwMod.MODID, "textures/gui/icon_market.png"), p -> p.minecraft.setScreen(new MarketAppScreen(p))));
+        availableApps.add(new AppEntry("twstore", "TwStore", new ResourceLocation(TwMod.MODID, "textures/gui/icon_store.png"), p -> p.minecraft.setScreen(new TwStoreScreen(p))));
 
-        availableApps.add(new AppEntry("dino", "Dino", new ResourceLocation(TwMod.MODID, "textures/gui/app_dino.png"), p -> p.minecraft.setScreen(new DinoGameScreen(p))));
-        availableApps.add(new AppEntry("twgramm", "TwGramm", new ResourceLocation(TwMod.MODID, "textures/gui/app_twgramm.png"), p -> p.minecraft.setScreen(new TwGrammScreen(p))));
-        availableApps.add(new AppEntry("camera", "Камера", new ResourceLocation(TwMod.MODID, "textures/gui/app_camera.png"), p -> p.minecraft.setScreen(new CameraAppScreen(p))));
-        availableApps.add(new AppEntry("gallery", "Галерея", new ResourceLocation(TwMod.MODID, "textures/gui/app_gallery.png"), p -> p.minecraft.setScreen(new GalleryAppScreen(p))));
+        availableApps.add(new AppEntry("dino", "Dino", new ResourceLocation(TwMod.MODID, "textures/gui/icon_dino.png"), p -> p.minecraft.setScreen(new DinoGameScreen(p))));
+        availableApps.add(new AppEntry("twgramm", "TwGramm", new ResourceLocation(TwMod.MODID, "textures/gui/icon_twgramm.png"), p -> p.minecraft.setScreen(new TwGrammScreen(p))));
+        availableApps.add(new AppEntry("camera", "Камера", new ResourceLocation(TwMod.MODID, "textures/gui/icon_camera.png"), p -> p.minecraft.setScreen(new CameraAppScreen(p))));
+        availableApps.add(new AppEntry("gallery", "Галерея", new ResourceLocation(TwMod.MODID, "textures/gui/icon_gallery.png"), p -> p.minecraft.setScreen(new GalleryAppScreen(p))));
+        availableApps.add(new AppEntry("settings", "Настройки", new ResourceLocation(TwMod.MODID, "textures/gui/icon_settings.png"), p -> p.minecraft.setScreen(new SettingsAppScreen(p))));
     }
 
     @Override
@@ -44,19 +46,19 @@ public class PhoneScreen extends Screen {
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
         // Check Home Button click
-        int homeBtnX = centerX - 15;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 22;
-        if (mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12) {
+        int homeBtnX = centerX - 12;
+        int homeBtnY = phoneY + PHONE_HEIGHT - 18;
+        if (mouseX >= homeBtnX && mouseX <= homeBtnX + 24 && mouseY >= homeBtnY && mouseY <= homeBtnY + 10) {
             return true;
         }
 
         // Check App Icon Clicks in Grid Layout (3 Columns x 4 Rows)
         List<AppEntry> installed = getInstalledAppEntries();
-        int gridStartX = phoneX + 16;
-        int gridStartY = phoneY + 35;
-        int iconSize = 32;
-        int gapX = 14;
-        int gapY = 20;
+        int gridStartX = phoneX + 12;
+        int gridStartY = phoneY + 28;
+        int iconSize = 28;
+        int gapX = 6;
+        int gapY = 16;
 
         for (int i = 0; i < installed.size(); i++) {
             int col = i % 3;
@@ -77,7 +79,7 @@ public class PhoneScreen extends Screen {
     private List<AppEntry> getInstalledAppEntries() {
         List<AppEntry> installed = new ArrayList<>();
         for (AppEntry app : availableApps) {
-            if (ClientQuestData.isAppInstalled(app.id())) {
+            if ("settings".equals(app.id()) || ClientQuestData.isAppInstalled(app.id())) {
                 installed.add(app);
             }
         }
@@ -94,27 +96,47 @@ public class PhoneScreen extends Screen {
         int phoneX = centerX - PHONE_WIDTH / 2;
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
-        // 1. Render Phone Frame & Wallpaper Texture Background
+        // 1. Render Phone Frame (120x220) Texture
         try {
-            guiGraphics.blit(PHONE_BG, phoneX - 5, phoneY - 5, 0, 0, PHONE_WIDTH + 10, PHONE_HEIGHT + 10, PHONE_WIDTH + 10, PHONE_HEIGHT + 10);
+            guiGraphics.blit(PHONE_FRAME, phoneX, phoneY, 0, 0, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
         } catch (Exception e) {
             guiGraphics.fill(phoneX, phoneY, phoneX + PHONE_WIDTH, phoneY + PHONE_HEIGHT, 0xFF0B1021);
         }
 
         // 2. Camera Notch
-        guiGraphics.fill(centerX - 18, phoneY - 3, centerX + 18, phoneY - 1, 0xFF000000);
+        guiGraphics.fill(centerX - 12, phoneY + 4, centerX + 12, phoneY + 6, 0xFF000000);
 
-        // 3. Status Bar
-        guiGraphics.drawString(this.font, "12:00", phoneX + 8, phoneY + 6, 0xDDDDDD, false);
-        guiGraphics.drawString(this.font, "5G ⚡", phoneX + PHONE_WIDTH - 30, phoneY + 6, 0xDDDDDD, false);
+        // 3. Status Bar: Game Time & Signal/Airplane
+        Minecraft mc = Minecraft.getInstance();
+        String timeStr = "12:00";
+        if (mc.level != null) {
+            long dayTime = (mc.level.getDayTime() + 6000) % 24000;
+            long hours = dayTime / 1000;
+            long minutes = (dayTime % 1000) * 60 / 1000;
+            timeStr = String.format("%02d:%02d", hours, minutes);
+        }
 
-        // 4. Desktop App Icons Grid (Transparent PNG icons without color boxes)
+        String signalStr = SettingsAppScreen.airplaneMode ? "✈️" : "ıll 100%";
+
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(phoneX + 8, phoneY + 8, 0);
+        guiGraphics.pose().scale(0.6f, 0.6f, 1.0f);
+        guiGraphics.drawString(this.font, timeStr, 0, 0, 0xEEEEEE, true);
+        guiGraphics.pose().popPose();
+
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(phoneX + PHONE_WIDTH - 35, phoneY + 8, 0);
+        guiGraphics.pose().scale(0.6f, 0.6f, 1.0f);
+        guiGraphics.drawString(this.font, signalStr, 0, 0, 0xEEEEEE, true);
+        guiGraphics.pose().popPose();
+
+        // 4. Desktop App Icons Grid (icon_*.png 32x32 textures)
         List<AppEntry> installed = getInstalledAppEntries();
-        int gridStartX = phoneX + 16;
-        int gridStartY = phoneY + 35;
-        int iconSize = 32;
-        int gapX = 14;
-        int gapY = 20;
+        int gridStartX = phoneX + 12;
+        int gridStartY = phoneY + 28;
+        int iconSize = 28;
+        int gapX = 6;
+        int gapY = 16;
 
         for (int i = 0; i < installed.size(); i++) {
             AppEntry app = installed.get(i);
@@ -126,20 +148,19 @@ public class PhoneScreen extends Screen {
 
             boolean hovered = mouseX >= ix && mouseX <= ix + iconSize && mouseY >= iy && mouseY <= iy + iconSize;
 
-            // Render App Icon Texture directly
             try {
                 if (hovered) {
-                    guiGraphics.fill(ix - 2, iy - 2, ix + iconSize + 2, iy + iconSize + 2, 0x40FFFFFF);
+                    guiGraphics.fill(ix - 1, iy - 1, ix + iconSize + 1, iy + iconSize + 1, 0x40FFFFFF);
                 }
                 guiGraphics.blit(app.icon(), ix, iy, 0, 0, iconSize, iconSize, iconSize, iconSize);
             } catch (Exception ignored) {
             }
 
-            // Scaled App Label (0.75f) with shadow, centered under icon
+            // Scaled App Label (0.6f) with shadow, centered under icon
             guiGraphics.pose().pushPose();
-            float labelScale = 0.75f;
+            float labelScale = 0.6f;
             float iconCenterX = ix + iconSize / 2.0f;
-            float labelY = iy + iconSize + 3;
+            float labelY = iy + iconSize + 2;
 
             guiGraphics.pose().translate(iconCenterX, labelY, 0);
             guiGraphics.pose().scale(labelScale, labelScale, 1.0f);
@@ -148,14 +169,13 @@ public class PhoneScreen extends Screen {
             guiGraphics.pose().popPose();
         }
 
-        // 5. Bottom Home Button
-        int homeBtnX = centerX - 15;
-        int homeBtnY = phoneY + PHONE_HEIGHT - 18;
-        boolean homeHovered = mouseX >= homeBtnX && mouseX <= homeBtnX + 30 && mouseY >= homeBtnY && mouseY <= homeBtnY + 12;
+        // 5. Home Button
+        int homeBtnX = centerX - 12;
+        int homeBtnY = phoneY + PHONE_HEIGHT - 16;
+        boolean homeHovered = mouseX >= homeBtnX && mouseX <= homeBtnX + 24 && mouseY >= homeBtnY && mouseY <= homeBtnY + 10;
         int homeColor = homeHovered ? 0xFFD4AF37 : 0xFF555555;
 
-        guiGraphics.fill(homeBtnX, homeBtnY, homeBtnX + 30, homeBtnY + 10, homeColor);
-        guiGraphics.drawCenteredString(this.font, "—", centerX, homeBtnY + 1, 0xFFFFFFFF);
+        guiGraphics.fill(homeBtnX, homeBtnY, homeBtnX + 24, homeBtnY + 8, homeColor);
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
