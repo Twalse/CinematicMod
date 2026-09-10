@@ -18,8 +18,8 @@ public class PhoneScreen extends Screen {
     public static final ResourceLocation BG_DARK = new ResourceLocation("twmod", "textures/gui/phone_bg_dark.png");
     public static final ResourceLocation BG_WALLPAPER = new ResourceLocation("twmod", "textures/gui/phone_bg_wallpaper.png");
 
-    public static final int PHONE_WIDTH = 104;
-    public static final int PHONE_HEIGHT = 214;
+    public static final int PHONE_WIDTH = 120;
+    public static final int PHONE_HEIGHT = 220;
 
     public enum PhoneState {
         OFF,
@@ -104,11 +104,11 @@ public class PhoneScreen extends Screen {
 
             // Check App Icon Clicks in Grid Layout (3 Columns x 4 Rows)
             List<AppEntry> installed = getInstalledAppEntries();
-            int gridStartX = phoneX + 10;
-            int gridStartY = phoneY + 28;
+            int gridStartX = phoneX + 12;
+            int gridStartY = phoneY + 34;
             int iconSize = 24;
-            int gapX = 5;
-            int gapY = 16;
+            int gapX = 12;
+            int gapY = 18;
 
             for (int i = 0; i < installed.size(); i++) {
                 int col = i % 3;
@@ -148,8 +148,7 @@ public class PhoneScreen extends Screen {
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
         if (state == PhoneState.OFF) {
-            // Render phone_bg_black.png
-            guiGraphics.blit(BG_BLACK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
+            guiGraphics.blit(BG_BLACK, phoneX, phoneY, PHONE_WIDTH, PHONE_HEIGHT, 0.0F, 0.0F, 104, 214, 104, 214);
             super.render(guiGraphics, mouseX, mouseY, partialTick);
             return;
         }
@@ -161,8 +160,7 @@ public class PhoneScreen extends Screen {
             if (elapsed >= bootDuration) {
                 state = PhoneState.ACTIVE;
             } else {
-                // Render phone_bg_dark.png
-                guiGraphics.blit(BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
+                guiGraphics.blit(BG_DARK, phoneX, phoneY, PHONE_WIDTH, PHONE_HEIGHT, 0.0F, 0.0F, 104, 214, 104, 214);
 
                 double progress = (double) elapsed / bootDuration;
                 float alpha = (float) Math.sin(progress * Math.PI);
@@ -180,10 +178,10 @@ public class PhoneScreen extends Screen {
             }
         }
 
-        // State is ACTIVE: Render phone_bg_wallpaper.png background
-        guiGraphics.blit(BG_WALLPAPER, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
+        // State is ACTIVE: Render 140x250 phone_bg_wallpaper.png scaled into PHONE_WIDTH x PHONE_HEIGHT
+        guiGraphics.blit(BG_WALLPAPER, phoneX, phoneY, PHONE_WIDTH, PHONE_HEIGHT, 0.0F, 0.0F, 140, 250, 140, 250);
 
-        // Status Bar: Game Time & Signal/Airplane
+        // Status Bar: Safely below camera notch
         Minecraft mc = Minecraft.getInstance();
         String timeStr = "12:00";
         if (mc.level != null) {
@@ -193,27 +191,27 @@ public class PhoneScreen extends Screen {
             timeStr = String.format("%02d:%02d", hours, minutes);
         }
 
-        String signalStr = SettingsAppScreen.airplaneMode ? "✈️" : "ıll 100%";
+        String signalStr = SettingsAppScreen.airplaneMode ? "✈️" : "100%";
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(phoneX + 10, phoneY + 12, 0);
+        guiGraphics.pose().translate(phoneX + 12, phoneY + 14, 0);
         guiGraphics.pose().scale(0.55f, 0.55f, 1.0f);
-        guiGraphics.drawString(this.font, timeStr, 0, 0, 0xEEEEEE, true);
+        guiGraphics.drawString(this.font, timeStr, 0, 0, 0xFFFFFFFF, true);
         guiGraphics.pose().popPose();
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(phoneX + PHONE_WIDTH - 34, phoneY + 12, 0);
+        guiGraphics.pose().translate(phoneX + PHONE_WIDTH - 30, phoneY + 14, 0);
         guiGraphics.pose().scale(0.55f, 0.55f, 1.0f);
-        guiGraphics.drawString(this.font, signalStr, 0, 0, 0xEEEEEE, true);
+        guiGraphics.drawString(this.font, signalStr, 0, 0, 0xFFFFFFFF, true);
         guiGraphics.pose().popPose();
 
-        // Desktop App Icons Grid
+        // Desktop App Icons Grid (32x32 textures scaled cleanly to 24x24 using 11-param blit)
         List<AppEntry> installed = getInstalledAppEntries();
-        int gridStartX = phoneX + 10;
-        int gridStartY = phoneY + 28;
+        int gridStartX = phoneX + 12;
+        int gridStartY = phoneY + 34;
         int iconSize = 24;
-        int gapX = 5;
-        int gapY = 16;
+        int gapX = 12;
+        int gapY = 18;
 
         for (int i = 0; i < installed.size(); i++) {
             AppEntry app = installed.get(i);
@@ -229,8 +227,8 @@ public class PhoneScreen extends Screen {
                 if (hovered) {
                     guiGraphics.fill(ix - 1, iy - 1, ix + iconSize + 1, iy + iconSize + 1, 0x40FFFFFF);
                 }
-                // Render pure icon texture without extra black fills
-                guiGraphics.blit(app.icon(), ix, iy, 0.0F, 0.0F, iconSize, iconSize, 32, 32);
+                // Full 32x32 texture scaled into 24x24 screen box
+                guiGraphics.blit(app.icon(), ix, iy, iconSize, iconSize, 0.0F, 0.0F, 32, 32, 32, 32);
             } catch (Exception ignored) {
             }
 
