@@ -7,6 +7,7 @@ import com.twalse.twmod.networking.message.OpenAdminScreenPacket;
 import com.twalse.twmod.networking.message.OpenLockpickPacket;
 import com.twalse.twmod.networking.message.OpenPhonePacket;
 import com.twalse.twmod.networking.message.SendVideoPlayer;
+import com.twalse.twmod.networking.message.StartGeneratorPacket;
 import com.twalse.twmod.networking.message.SyncQuestDataPacket;
 import com.twalse.twmod.quest.PlayerQuestProvider;
 import net.minecraft.resources.ResourceLocation;
@@ -76,6 +77,12 @@ public class PacketHandler {
                 .encoder(BuyItemPacket::encode)
                 .decoder(BuyItemPacket::decode)
                 .consumerMainThread(BuyItemPacket::handle)
+                .add();
+
+        INSTANCE.messageBuilder(StartGeneratorPacket.class, packetId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(StartGeneratorPacket::encode)
+                .decoder(StartGeneratorPacket::decode)
+                .consumerMainThread(StartGeneratorPacket::handle)
                 .add();
     }
 

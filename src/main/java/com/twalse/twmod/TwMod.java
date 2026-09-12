@@ -1,5 +1,7 @@
 package com.twalse.twmod;
 
+import com.twalse.twmod.block.ModBlocks;
+import com.twalse.twmod.block.ModMenuTypes;
 import com.twalse.twmod.commands.StartVideoCommand;
 import com.twalse.twmod.commands.TwCommand;
 import com.twalse.twmod.config.CinematicConfig;
@@ -35,6 +37,9 @@ public class TwMod {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         ModItems.register(modEventBus);
+        ModBlocks.register(modEventBus);
+        ModMenuTypes.register(modEventBus);
+
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, CinematicConfig.CLIENT_SPEC);
 
         modEventBus.addListener(this::commonSetup);

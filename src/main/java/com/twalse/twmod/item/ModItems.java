@@ -18,7 +18,10 @@ public class ModItems {
             () -> new HeavyCargoItem(new Item.Properties()));
 
     public static final RegistryObject<Item> LOCKPICK = ITEMS.register("lockpick",
-            () -> new Item(new Item.Properties()));
+            () -> new LockpickItem(new Item.Properties().stacksTo(16)));
+
+    public static final RegistryObject<Item> GASOLINE = ITEMS.register("gasoline",
+            () -> new Item(new Item.Properties().stacksTo(16)));
 
     public static final RegistryObject<Item> MEDKIT = ITEMS.register("medkit",
             () -> new Item(new Item.Properties()));
