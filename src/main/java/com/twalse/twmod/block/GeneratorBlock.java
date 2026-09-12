@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class GeneratorBlock extends Block implements EntityBlock {
 
-    public static final BooleanProperty POWERED = BooleanProperty.create("powered");
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     public GeneratorBlock() {
         super(BlockBehaviour.Properties.of()

@@ -52,9 +52,10 @@ public class GeneratorBlockEntity extends BlockEntity implements MenuProvider, n
         this.isActive = active;
         if (this.level != null) {
             BlockState currentState = this.getBlockState();
-            if (currentState.hasProperty(GeneratorBlock.POWERED) && currentState.getValue(GeneratorBlock.POWERED) != active) {
+            if (currentState.hasProperty(GeneratorBlock.POWERED)) {
                 this.level.setBlock(this.worldPosition, currentState.setValue(GeneratorBlock.POWERED, active), 3);
                 this.level.updateNeighborsAt(this.worldPosition, currentState.getBlock());
+                this.level.updateNeighborsAt(this.worldPosition.below(), currentState.getBlock());
             }
         }
         setChanged();
