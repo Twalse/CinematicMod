@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "twmod:block/generator"
+    },
+    "powered=true": {
+      "model": "twmod:block/generator"
+    }
+  }
+}
