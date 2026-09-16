@@ -23,6 +23,9 @@ public class ModItems {
     public static final RegistryObject<Item> GASOLINE = ITEMS.register("gasoline",
             () -> new Item(new Item.Properties().stacksTo(16)));
 
+    public static final RegistryObject<Item> OLD_BRICK = ITEMS.register("old_brick",
+            () -> new Item(new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> MEDKIT = ITEMS.register("medkit",
             () -> new Item(new Item.Properties()));
 

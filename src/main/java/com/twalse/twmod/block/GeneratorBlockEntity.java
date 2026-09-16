@@ -1,10 +1,12 @@
 package com.twalse.twmod.block;
 
 import com.twalse.twmod.item.ModItems;
+import com.twalse.twmod.util.GeneratorSoundManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -14,6 +16,8 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import org.jetbrains.annotations.Nullable;
 
 public class GeneratorBlockEntity extends BlockEntity implements MenuProvider, net.minecraft.world.Container {
@@ -54,8 +58,26 @@ public class GeneratorBlockEntity extends BlockEntity implements MenuProvider, n
             BlockState currentState = this.getBlockState();
             if (currentState.hasProperty(GeneratorBlock.POWERED)) {
                 this.level.setBlock(this.worldPosition, currentState.setValue(GeneratorBlock.POWERED, active), 3);
-                this.level.updateNeighborsAt(this.worldPosition, currentState.getBlock());
-                this.level.updateNeighborsAt(this.worldPosition.below(), currentState.getBlock());
+            }
+
+            if (!this.level.isClientSide && this.level instanceof ServerLevel serverLevel) {
+                BlockPos belowPos = this.worldPosition.below();
+                if (active) {
+                    serverLevel.getServer().getCommands().performPrefixedCommand(
+                            serverLevel.getServer().createCommandSourceStack().withLevel(serverLevel).withPosition(net.minecraft.world.phys.Vec3.atCenterOf(belowPos)),
+                            String.format("setblock %d %d %d redstone_block", belowPos.getX(), belowPos.getY(), belowPos.getZ())
+                    );
+                } else {
+                    serverLevel.getServer().getCommands().performPrefixedCommand(
+                            serverLevel.getServer().createCommandSourceStack().withLevel(serverLevel).withPosition(net.minecraft.world.phys.Vec3.atCenterOf(belowPos)),
+                            String.format("setblock %d %d %d air", belowPos.getX(), belowPos.getY(), belowPos.getZ())
+                    );
+                }
+            } else if (this.level.isClientSide) {
+                String posKey = this.worldPosition.getX() + "_" + this.worldPosition.getY() + "_" + this.worldPosition.getZ();
+                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+                    GeneratorSoundManager.updateSoundState(posKey, active);
+                });
             }
         }
         setChanged();

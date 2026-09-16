@@ -18,8 +18,8 @@ public class PhoneScreen extends Screen {
     public static final ResourceLocation BG_DARK = new ResourceLocation("twmod", "textures/gui/phone_bg_dark.png");
     public static final ResourceLocation BG_WALLPAPER = new ResourceLocation("twmod", "textures/gui/phone_bg_wallpaper.png");
 
-    public static final int PHONE_WIDTH = 104;
-    public static final int PHONE_HEIGHT = 214;
+    public static final int PHONE_WIDTH = 140;
+    public static final int PHONE_HEIGHT = 250;
 
     public enum PhoneState {
         OFF,
@@ -102,17 +102,19 @@ public class PhoneScreen extends Screen {
                 return true;
             }
 
-            // Check App Icon Clicks in Grid Layout (3 Columns: phoneX+12, phoneX+42, phoneX+72)
+            // Check App Icon Clicks in Grid Layout (3 Columns)
             List<AppEntry> installed = getInstalledAppEntries();
-            int gridStartY = phoneY + 32;
-            int iconSize = 20;
-            int gapY = 18;
+            int gridStartX = phoneX + 18;
+            int gridStartY = phoneY + 40;
+            int iconSize = 24;
+            int gapX = 16;
+            int gapY = 22;
 
             for (int i = 0; i < installed.size(); i++) {
                 int col = i % 3;
                 int row = i / 3;
 
-                int ix = phoneX + 12 + col * 30;
+                int ix = gridStartX + col * (iconSize + gapX);
                 int iy = gridStartY + row * (iconSize + gapY);
 
                 if (mouseX >= ix && mouseX <= ix + iconSize && mouseY >= iy && mouseY <= iy + iconSize) {
@@ -146,7 +148,7 @@ public class PhoneScreen extends Screen {
         int phoneY = centerY - PHONE_HEIGHT / 2;
 
         if (state == PhoneState.OFF) {
-            guiGraphics.blit(BG_BLACK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
+            guiGraphics.blit(BG_BLACK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, 104, 214);
             super.render(guiGraphics, mouseX, mouseY, partialTick);
             return;
         }
@@ -158,7 +160,7 @@ public class PhoneScreen extends Screen {
             if (elapsed >= bootDuration) {
                 state = PhoneState.ACTIVE;
             } else {
-                guiGraphics.blit(BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
+                guiGraphics.blit(BG_DARK, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, 104, 214);
 
                 double progress = (double) elapsed / bootDuration;
                 float alpha = (float) Math.sin(progress * Math.PI);
@@ -176,7 +178,7 @@ public class PhoneScreen extends Screen {
             }
         }
 
-        // State is ACTIVE: Render wallpaper strictly at phoneX, phoneY with 104x214 dimensions
+        // State is ACTIVE: Render phone_bg_wallpaper.png at native 140x250 proportions centered without distortion
         guiGraphics.blit(BG_WALLPAPER, phoneX, phoneY, 0.0F, 0.0F, PHONE_WIDTH, PHONE_HEIGHT, PHONE_WIDTH, PHONE_HEIGHT);
 
         // Status Bar: Below top notch
@@ -192,29 +194,31 @@ public class PhoneScreen extends Screen {
         String signalStr = SettingsAppScreen.airplaneMode ? "✈️" : "100%";
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(phoneX + 10, phoneY + 12, 0);
-        guiGraphics.pose().scale(0.55f, 0.55f, 1.0f);
+        guiGraphics.pose().translate(phoneX + 16, phoneY + 16, 0);
+        guiGraphics.pose().scale(0.6f, 0.6f, 1.0f);
         guiGraphics.drawString(this.font, timeStr, 0, 0, 0xFFFFFFFF, true);
         guiGraphics.pose().popPose();
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(phoneX + PHONE_WIDTH - 28, phoneY + 12, 0);
-        guiGraphics.pose().scale(0.55f, 0.55f, 1.0f);
+        guiGraphics.pose().translate(phoneX + PHONE_WIDTH - 36, phoneY + 16, 0);
+        guiGraphics.pose().scale(0.6f, 0.6f, 1.0f);
         guiGraphics.drawString(this.font, signalStr, 0, 0, 0xFFFFFFFF, true);
         guiGraphics.pose().popPose();
 
-        // Desktop App Icons Grid (3 Columns strictly aligned at phoneX+12, phoneX+42, phoneX+72)
+        // Desktop App Icons Grid
         List<AppEntry> installed = getInstalledAppEntries();
-        int gridStartY = phoneY + 32;
-        int iconSize = 20;
-        int gapY = 18;
+        int gridStartX = phoneX + 18;
+        int gridStartY = phoneY + 40;
+        int iconSize = 24;
+        int gapX = 16;
+        int gapY = 22;
 
         for (int i = 0; i < installed.size(); i++) {
             AppEntry app = installed.get(i);
             int col = i % 3;
             int row = i / 3;
 
-            int ix = phoneX + 12 + col * 30;
+            int ix = gridStartX + col * (iconSize + gapX);
             int iy = gridStartY + row * (iconSize + gapY);
 
             boolean hovered = mouseX >= ix && mouseX <= ix + iconSize && mouseY >= iy && mouseY <= iy + iconSize;
@@ -227,8 +231,8 @@ public class PhoneScreen extends Screen {
             } catch (Exception ignored) {
             }
 
-            // Scaled App Label - Centered dynamically under icon using font.width
-            float labelScale = 0.5f;
+            // Scaled App Label
+            float labelScale = 0.55f;
             int textW = this.font.width(app.name());
             float textCenterX = ix + (iconSize - textW * labelScale) / 2.0f;
             float labelY = iy + iconSize + 2;
@@ -241,9 +245,9 @@ public class PhoneScreen extends Screen {
         }
 
         // iPhone 17 Home Indicator Bar
-        int navBarX = centerX - 16;
-        int navBarY = phoneY + PHONE_HEIGHT - 10;
-        guiGraphics.fill(navBarX, navBarY, navBarX + 32, navBarY + 3, 0xDDFFFFFF);
+        int navBarX = centerX - 18;
+        int navBarY = phoneY + PHONE_HEIGHT - 12;
+        guiGraphics.fill(navBarX, navBarY, navBarX + 36, navBarY + 3, 0xDDFFFFFF);
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
